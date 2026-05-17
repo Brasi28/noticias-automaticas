@@ -23,7 +23,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
 
@@ -116,68 +116,102 @@
     </header>
 
     <main class="news-shell">
-      <section class="hero-layout" id="portada">
-        <div class="hero-main" id="featured-story"></div>
-        <aside class="ad-shell ad-vertical" aria-label="Espacio publicitario vertical">
-          <p class="ad-label">ESPACIO PUBLICITARIO</p>
-          <ins
-            class="adsbygoogle"
-            style="display:block"
-            data-ad-client="ca-pub-3049130201122598"
-            data-ad-slot="1234567890"
-            data-ad-format="auto"
-            data-full-width-responsive="true"
-          ></ins>
+      <div class="layout-grid" id="portada">
+        <aside class="left-column">
+          <section class="weather-box" aria-label="Clima actual">
+            <p class="weather-city">LISBOA</p>
+            <p class="weather-temp">18°</p>
+            <p class="weather-meta">Mayormente nublado</p>
+            <p class="weather-date">Actualizado cada hora</p>
+          </section>
+
+          <aside class="trending-panel" id="trending-panel" aria-label="Tendencias ahora"></aside>
+
+          <section class="ad-shell ad-vertical" aria-label="Espacio publicitario vertical">
+            <p class="ad-label">ESPACIO PUBLICITARIO</p>
+            <ins
+              class="adsbygoogle"
+              style="display:block"
+              data-ad-client="ca-pub-3049130201122598"
+              data-ad-slot="1234567890"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            ></ins>
+          </section>
         </aside>
-      </section>
 
-      <section class="ad-shell ad-shell-mid" aria-label="Espacio publicitario horizontal">
-        <p class="ad-label">ESPACIO PUBLICITARIO</p>
-        <ins
-          class="adsbygoogle"
-          style="display:block"
-          data-ad-client="ca-pub-3049130201122598"
-          data-ad-slot="1234567890"
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        ></ins>
-      </section>
+        <section class="center-column">
+          <section class="hero-layout">
+            <div class="hero-main" id="featured-story"></div>
+          </section>
 
-      <section class="section-block">
-        <div class="panel-head">
-          <h2>SECCIONES PRINCIPALES</h2>
-          <p>Portada modular con las categorías que más interesan ahora.</p>
-        </div>
-        <nav class="cat-filter-bar" id="category-filter-nav" aria-label="Filtrar por categoría">
-          <!-- Botones generados dinámicamente desde script.js según CTR -->
-        </nav>
-        <div class="section-grid" id="news-container" aria-live="polite">
-          <!-- Secciones editoriales y tarjetas de noticias generadas desde script.js -->
-        </div>
-      </section>
+          <section class="ad-shell ad-shell-mid" aria-label="Espacio publicitario horizontal">
+            <p class="ad-label">ESPACIO PUBLICITARIO</p>
+            <ins
+              class="adsbygoogle"
+              style="display:block"
+              data-ad-client="ca-pub-3049130201122598"
+              data-ad-slot="1234567890"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            ></ins>
+          </section>
 
-      <section class="ad-shell ad-shell-mid" aria-label="Espacio publicitario horizontal">
-        <p class="ad-label">ESPACIO PUBLICITARIO</p>
-        <ins
-          class="adsbygoogle"
-          style="display:block"
-          data-ad-client="ca-pub-3049130201122598"
-          data-ad-slot="1234567890"
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-        ></ins>
-      </section>
+          <section class="section-block">
+            <div class="panel-head">
+              <h2>SECCIONES PRINCIPALES</h2>
+              <p>Cobertura automatizada por categoria con enfoque editorial en tiempo real.</p>
+            </div>
+            <nav class="cat-filter-bar" id="category-filter-nav" aria-label="Filtrar por categoría">
+              <!-- Botones generados dinámicamente desde script.js según CTR -->
+            </nav>
+            <div class="section-grid" id="news-container" aria-live="polite">
+              <!-- Secciones editoriales y tarjetas de noticias generadas desde script.js -->
+            </div>
+          </section>
 
-      <section class="content-split">
-        <aside class="trending-panel" id="trending-panel" aria-label="Tendencias ahora"></aside>
-        <section class="videos-panel" aria-labelledby="videos-title">
-          <div class="panel-head">
-            <h2 id="videos-title">VIDEOS DESTACADOS</h2>
-            <p>Tres piezas visuales para aumentar permanencia y sesión.</p>
-          </div>
-          <div class="video-grid video-grid--featured" id="video-container"></div>
+          <section class="videos-panel" aria-labelledby="videos-title">
+            <div class="panel-head">
+              <h2 id="videos-title">VIDEOS DESTACADOS</h2>
+              <p>Piezas visuales para aumentar permanencia y profundidad de sesión.</p>
+            </div>
+            <div class="video-grid video-grid--featured" id="video-container"></div>
+          </section>
         </section>
-      </section>
+
+        <aside class="right-column">
+          <section class="ad-shell ad-vertical" aria-label="Espacio publicitario lateral">
+            <p class="ad-label">ESPACIO PUBLICITARIO</p>
+            <ins
+              class="adsbygoogle"
+              style="display:block"
+              data-ad-client="ca-pub-3049130201122598"
+              data-ad-slot="1234567890"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            ></ins>
+          </section>
+
+          <section class="tag-panel" id="opinion" aria-label="Etiquetas destacadas">
+            <a href="#opinion">#OPINION</a>
+            <a href="#cultura-ciencia">#CIENCIA</a>
+            <a href="#deportes">#DEPORTES</a>
+            <a href="#videos-title">#VIDEOS</a>
+          </section>
+
+          <section class="ad-shell ad-vertical" aria-label="Espacio publicitario lateral inferior">
+            <p class="ad-label">ESPACIO PUBLICITARIO</p>
+            <ins
+              class="adsbygoogle"
+              style="display:block"
+              data-ad-client="ca-pub-3049130201122598"
+              data-ad-slot="1234567890"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            ></ins>
+          </section>
+        </aside>
+      </div>
 
       <section class="ad-shell ad-shell-bottom" aria-label="Espacio publicitario inferior">
         <p class="ad-label">ESPACIO PUBLICITARIO</p>
