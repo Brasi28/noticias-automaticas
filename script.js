@@ -346,38 +346,25 @@ function renderFeaturedStory(newsList = []) {
   const featured = document.getElementById("featured-story");
   if (!featured || !newsList.length) return;
 
-  const heroVideos = [...newsList]
-    .sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))
-    .slice(0, 8);
+  const heroItem = [...newsList].sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))[0];
+  if (!heroItem) return;
 
   featured.innerHTML = `
-    <article class="hero-story">
+    <article class="hero-story hero-story--news">
       <div class="hero-story__media">
-        <video
-          id="hero-viral-player"
-          autoplay
-          muted
-          loop
-          playsinline
-          controls
-          preload="metadata"
-        ></video>
+        <img src="${heroItem.thumbnail}" alt="Imagen destacada de ${heroItem.seoTitle}" loading="eager" decoding="async" />
         <div class="hero-story__badge">ÚLTIMA HORA</div>
       </div>
       <div class="hero-story__content">
-        <p class="hero-story__kicker" id="hero-viral-category">VIRAL</p>
-        <h2 id="hero-viral-title">Cargando video viral...</h2>
-        <p id="hero-viral-summary">Seleccionando la mejor pieza viral para maximizar tiempo en página.</p>
+        <p class="hero-story__kicker">${heroItem.category}</p>
+        <h2>${heroItem.seoTitle}</h2>
+        <p>${truncateByWords(heroItem.shortSummary || heroItem.fullSummary, 30)}</p>
         <div class="hero-story__actions">
-          <button class="cta cta--ghost" id="hero-viral-prev" type="button">◀ ANTERIOR</button>
-          <button class="cta cta--ghost" id="hero-viral-next" type="button">SIGUIENTE ▶</button>
-          <a class="cta" id="hero-viral-link" href="#">LEER CONTEXTO</a>
-          <span class="hero-story__meta" id="hero-viral-meta"></span>
+          <a class="cta" href="news/${heroItem.fileName}">LEER MÁS</a>
+          <span class="hero-story__meta">${new Date(heroItem.generatedAt).toLocaleString("es-ES")}</span>
         </div>
       </div>
     </article>`;
-
-  initHeroViralControls(heroVideos, 0);
 }
 
 function renderTrendingNow(newsList) {
