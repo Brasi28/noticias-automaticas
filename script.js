@@ -7,6 +7,8 @@ const cardTemplate = document.getElementById("news-card-template");
 const lastUpdateEl = document.getElementById("last-update");
 const refreshBtn = document.getElementById("refresh-btn");
 const videoContainer = document.getElementById("video-container");
+const videoPrevBtn = document.getElementById("video-prev");
+const videoNextBtn = document.getElementById("video-next");
 
 const VIDEO_CATEGORIES = [
   "Tecnología",
@@ -159,6 +161,30 @@ function getYouTubeSearchEmbedUrl(category) {
   return `https://www.youtube.com/embed?listType=search&list=${query}&rel=0&modestbranding=1`;
 }
 
+function initVideoCarousel() {
+  if (!videoContainer || !videoPrevBtn || !videoNextBtn) return;
+
+  const getStep = () => {
+    const firstCard = videoContainer.querySelector(".video-card");
+    if (!firstCard) return videoContainer.clientWidth;
+    const cardWidth = firstCard.getBoundingClientRect().width;
+    const styles = window.getComputedStyle(videoContainer);
+    const gap = Number.parseFloat(styles.columnGap || styles.gap || "0") || 0;
+    return cardWidth + gap;
+  };
+
+  const move = (direction) => {
+    const step = getStep();
+    videoContainer.scrollBy({
+      left: direction * step,
+      behavior: "smooth"
+    });
+  };
+
+  videoPrevBtn.onclick = () => move(-1);
+  videoNextBtn.onclick = () => move(1);
+}
+
 function renderVideos(newsList = []) {
   if (!videoContainer) return;
 
@@ -169,10 +195,10 @@ function renderVideos(newsList = []) {
     }
   }
 
-  const selectedVideos = Array.from(latestByCategory.values()).slice(0, 3);
-  const fallbackCategories = VIDEO_CATEGORIES.slice(0, 3);
+  const selectedVideos = Array.from(latestByCategory.values()).slice(0, 8);
+  const fallbackCategories = VIDEO_CATEGORIES.slice(0, 8);
 
-  while (selectedVideos.length < 3) {
+  while (selectedVideos.length < 8) {
     const fallbackCategory = fallbackCategories[selectedVideos.length];
     if (!fallbackCategory) break;
     selectedVideos.push({
@@ -188,30 +214,28 @@ function renderVideos(newsList = []) {
   selectedVideos.forEach((item) => {
     const card = document.createElement("article");
     card.className = "video-card video-card--featured";
-    card.innerHTML = item.thumbnail
-      ? `
-      <a class="video-thumb" href="news/${item.fileName}">
-        <img src="${item.thumbnail}" alt="Miniatura de ${item.seoTitle}" loading="lazy" />
-        <span class="video-play" aria-hidden="true">▶</span>
-      </a>
+    const embedUrl = getYouTubeSearchEmbedUrl(item.category || "Noticias");
+    card.innerHTML = `
+      <div class="video-thumb video-embed">
+        <iframe
+          src="${embedUrl}"
+          title="Video recomendado sobre ${item.category}"
+          loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen
+        ></iframe>
+      </div>
       <div class="video-copy">
         <p class="video-kicker">Video destacado</p>
         <h3>${item.seoTitle}</h3>
         <p>${truncateByWords(item.shortSummary, 18)}</p>
-      </div>`
-      : `
-      <a class="video-thumb" href="#videos-title">
-        <div class="video-thumb-placeholder">
-          <span class="video-play" aria-hidden="true">▶</span>
-        </div>
-      </a>
-      <div class="video-copy">
-        <p class="video-kicker">Video destacado</p>
-        <h3>${item.seoTitle}</h3>
-        <p>${item.shortSummary}</p>
+        <a class="video-link" href="news/${item.fileName}">LEER CONTEXTO</a>
       </div>`;
     videoContainer.appendChild(card);
   });
+
+  initVideoCarousel();
 }
 
 function getArticleByCategory(newsList, allowedCategories = [], keywords = []) {
