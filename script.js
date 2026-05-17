@@ -7,6 +7,20 @@ const cardTemplate = document.getElementById("news-card-template");
 const lastUpdateEl = document.getElementById("last-update");
 const refreshBtn = document.getElementById("refresh-btn");
 
+// Inicializa anuncios de AdSense sin romper la página si hay bloqueadores o falta configuración.
+function initAds() {
+  const adBlocks = document.querySelectorAll("ins.adsbygoogle");
+  for (const block of adBlocks) {
+    if (block.dataset.adsLoaded === "true") continue;
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+      block.dataset.adsLoaded = "true";
+    } catch (error) {
+      console.debug("AdSense no inicializado todavía:", error?.message || error);
+    }
+  }
+}
+
 // Limita una cadena por palabras para no cortar de forma brusca en medio.
 function truncateByWords(text, maxWords = 30) {
   const words = (text || "").trim().split(/\s+/);
@@ -63,6 +77,8 @@ function renderNews(newsList) {
   if (lastUpdateEl) {
     lastUpdateEl.textContent = `Última actualización: ${new Date().toLocaleString("es-ES")}`;
   }
+
+  initAds();
 }
 
 // Obtiene el índice de noticias y lo pinta en pantalla.
@@ -108,6 +124,7 @@ if (refreshBtn) {
 
 // Carga inicial + recarga automática cada 30 minutos.
 loadNews();
+initAds();
 setInterval(() => {
   loadNews();
 }, REFRESH_INTERVAL_MS);

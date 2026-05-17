@@ -291,17 +291,22 @@ function buildNewsHtml(newsItem) {
     <title>${safeTitle}</title>
     <meta name="description" content="${safeMetaDescription}" />
     <meta name="robots" content="index, follow" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3049130201122598"
+      crossorigin="anonymous"></script>
+    <meta name="google-adsense-account" content="ca-pub-3049130201122598" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,700&display=swap" rel="stylesheet" />
     <style>
-      body { margin: 0; font-family: "Space Grotesk", "Segoe UI", sans-serif; background: #f4efe6; color: #17223b; }
-      .wrapper { max-width: 860px; margin: 2rem auto; padding: 1rem; }
+      body { margin: 0; font-family: "Space Grotesk", "Segoe UI", sans-serif; background: #f4efe6; color: #17223b; background-image: radial-gradient(circle at 10% 10%, #ffe6b5 0%, rgba(255,230,181,0) 42%); }
+      .wrapper { max-width: 900px; margin: 2rem auto; padding: 1rem; }
       article { background: #fffdf8; border: 1px solid #d8ceb8; border-radius: 18px; padding: 1rem; box-shadow: 0 14px 40px rgba(23,34,59,.14); }
       h1 { font-family: "Fraunces", Georgia, serif; line-height: 1.2; margin: .2rem 0 .7rem; }
       .meta { color: #4c5c73; margin-bottom: 1rem; font-size: .92rem; }
       img { width: 100%; border-radius: 12px; aspect-ratio: 16 / 9; object-fit: cover; }
       p { line-height: 1.75; color: #27344c; }
+      .ad-slot { border: 1px dashed #d8ceb8; border-radius: 14px; padding: .55rem; margin: .9rem 0; background: #fffcf4; }
+      .ad-label { margin: 0 0 .4rem; color: #4c5c73; font-size: .74rem; text-transform: uppercase; font-weight: 700; letter-spacing: .04em; }
       .actions { margin-top: 1.2rem; display: flex; gap: .8rem; flex-wrap: wrap; }
       .btn { text-decoration: none; background: #17223b; color: #fff; padding: .6rem 1rem; border-radius: 999px; font-weight: 700; }
       .btn.alt { background: #0b7285; }
@@ -321,9 +326,31 @@ ${JSON.stringify(jsonLd, null, 2)}
         </header>
         <section>
           <img src="${safeImagePath}" alt="Imagen de ${safeCategory}" loading="lazy" />
+          <div class="ad-slot" aria-label="Espacio publicitario en contenido">
+            <p class="ad-label">Publicidad</p>
+            <ins
+              class="adsbygoogle"
+              style="display:block"
+              data-ad-client="ca-pub-3049130201122598"
+              data-ad-slot="1234567890"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            ></ins>
+          </div>
           <p>${safeSummary}</p>
         </section>
         <footer>
+          <div class="ad-slot" aria-label="Espacio publicitario inferior">
+            <p class="ad-label">Publicidad</p>
+            <ins
+              class="adsbygoogle"
+              style="display:block"
+              data-ad-client="ca-pub-3049130201122598"
+              data-ad-slot="1234567890"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            ></ins>
+          </div>
           <div class="actions">
             <a class="btn" href="../index.html">Volver al inicio</a>
             <a class="btn alt" href="${safeSourceUrl}" target="_blank" rel="noopener noreferrer">Ver fuente original</a>
@@ -332,6 +359,17 @@ ${JSON.stringify(jsonLd, null, 2)}
         </footer>
       </article>
     </main>
+    <script>
+      document.querySelectorAll("ins.adsbygoogle").forEach((block) => {
+        if (block.dataset.adsLoaded === "true") return;
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+          block.dataset.adsLoaded = "true";
+        } catch (error) {
+          console.debug("AdSense no disponible:", error && error.message ? error.message : error);
+        }
+      });
+    </script>
   </body>
 </html>`;
 }
