@@ -1,0 +1,10 @@
+{
+  "name": "sistema-noticias-automatico",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Generador automatico de noticias SEO con Google News RSS",
+  "scripts": {
+    "generate": "node generate-news.js",
+    "generate:once": "node generate-news.js --once"
+  }
+}

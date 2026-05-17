@@ -1,0 +1,22 @@
+name: Trigger Netlify Deploy
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Netlify build hook
+        env:
+          NETLIFY_BUILD_HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+        run: |
+          if [ -z "$NETLIFY_BUILD_HOOK_URL" ]; then
+            echo "Falta el secreto NETLIFY_BUILD_HOOK_URL"
+            exit 1
+          fi
+
+          curl -X POST -fsS "$NETLIFY_BUILD_HOOK_URL"
+          echo "Deploy de Netlify disparado correctamente"
