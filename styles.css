@@ -294,6 +294,9 @@ h1 {
   animation: revealUp 0.55s ease both;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   position: relative;
+  min-width: 0;
+  max-width: 320px;
+  margin: 0 auto;
 }
 
 .news-card::before {
@@ -894,8 +897,9 @@ button:hover,
 
 .section-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 0.7rem;
+  align-items: stretch;
 }
 
 .section-card,
@@ -1029,7 +1033,8 @@ button:hover,
 }
 
 .video-grid--featured {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
 }
 
 .video-card--featured {
