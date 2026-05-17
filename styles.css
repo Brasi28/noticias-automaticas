@@ -1355,6 +1355,15 @@ h3,
   min-height: 420px;
 }
 
+.hero-story__media iframe,
+.hero-story__media video {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  object-fit: cover;
+}
+
 .hero-story__media::after {
   content: "";
   position: absolute;
@@ -1388,6 +1397,12 @@ h3,
   margin-top: 0.7rem;
   color: #bcc3cf;
   font-size: 1.02rem;
+}
+
+.cta--ghost {
+  background: linear-gradient(180deg, #272c38 0%, #11151d 100%);
+  border: 1px solid rgba(139, 148, 166, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .ad-shell {

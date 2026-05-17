@@ -9,6 +9,26 @@ const refreshBtn = document.getElementById("refresh-btn");
 const videoContainer = document.getElementById("video-container");
 const videoPrevBtn = document.getElementById("video-prev");
 const videoNextBtn = document.getElementById("video-next");
+let heroVideoIntervalId = null;
+
+const VIRAL_CLIPS = [
+  {
+    title: "Impacto global",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+  },
+  {
+    title: "Tendencia del día",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
+  },
+  {
+    title: "Última hora internacional",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"
+  },
+  {
+    title: "Cobertura en vivo",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"
+  }
+];
 
 const VIDEO_CATEGORIES = [
   "Tecnología",
@@ -221,7 +241,7 @@ function renderVideos(newsList = []) {
           src="${embedUrl}"
           title="Video recomendado sobre ${item.category}"
           loading="lazy"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           referrerpolicy="strict-origin-when-cross-origin"
           allowfullscreen
         ></iframe>
@@ -277,26 +297,87 @@ function createNewsCard(item, extraClass = "") {
   return fragment;
 }
 
-function renderFeaturedStory(item) {
+function initHeroViralControls(videos, currentIndex = 0) {
+  const player = document.getElementById("hero-viral-player");
+  const categoryEl = document.getElementById("hero-viral-category");
+  const titleEl = document.getElementById("hero-viral-title");
+  const summaryEl = document.getElementById("hero-viral-summary");
+  const linkEl = document.getElementById("hero-viral-link");
+  const metaEl = document.getElementById("hero-viral-meta");
+  const prevBtn = document.getElementById("hero-viral-prev");
+  const nextBtn = document.getElementById("hero-viral-next");
+
+  if (!player || !categoryEl || !titleEl || !summaryEl || !linkEl || !metaEl || !prevBtn || !nextBtn || !videos.length) {
+    return;
+  }
+
+  const paint = (index) => {
+    const safeIndex = (index + videos.length) % videos.length;
+    const item = videos[safeIndex];
+    const clip = VIRAL_CLIPS[safeIndex % VIRAL_CLIPS.length];
+    player.src = clip.url;
+    player.poster = item.thumbnail || "";
+    player.play().catch(() => {});
+    categoryEl.textContent = item.category || "VIRAL";
+    titleEl.textContent = `${item.seoTitle} · ${clip.title}`;
+    summaryEl.textContent = truncateByWords(item.shortSummary || item.fullSummary || "Video viral recomendado para aumentar permanencia.", 35);
+    linkEl.href = `news/${item.fileName}`;
+    metaEl.textContent = new Date(item.generatedAt).toLocaleString("es-ES");
+    return safeIndex;
+  };
+
+  let cursor = paint(currentIndex);
+
+  prevBtn.onclick = () => {
+    cursor = paint(cursor - 1);
+  };
+
+  nextBtn.onclick = () => {
+    cursor = paint(cursor + 1);
+  };
+
+  if (heroVideoIntervalId) clearInterval(heroVideoIntervalId);
+  heroVideoIntervalId = setInterval(() => {
+    cursor = paint(cursor + 1);
+  }, 18000);
+}
+
+function renderFeaturedStory(newsList = []) {
   const featured = document.getElementById("featured-story");
-  if (!featured || !item) return;
+  if (!featured || !newsList.length) return;
+
+  const heroVideos = [...newsList]
+    .sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))
+    .slice(0, 8);
 
   featured.innerHTML = `
     <article class="hero-story">
       <div class="hero-story__media">
-        <img src="${item.thumbnail}" alt="Miniatura de ${item.seoTitle}" loading="eager" />
+        <video
+          id="hero-viral-player"
+          autoplay
+          muted
+          loop
+          playsinline
+          controls
+          preload="metadata"
+        ></video>
         <div class="hero-story__badge">ÚLTIMA HORA</div>
       </div>
       <div class="hero-story__content">
-        <p class="hero-story__kicker">${item.category}</p>
-        <h2>${item.seoTitle}</h2>
-        <p>${truncateByWords(item.fullSummary, 42)}</p>
+        <p class="hero-story__kicker" id="hero-viral-category">VIRAL</p>
+        <h2 id="hero-viral-title">Cargando video viral...</h2>
+        <p id="hero-viral-summary">Seleccionando la mejor pieza viral para maximizar tiempo en página.</p>
         <div class="hero-story__actions">
-          <a class="cta" href="news/${item.fileName}">LEER MÁS</a>
-          <span class="hero-story__meta">${new Date(item.generatedAt).toLocaleString("es-ES")}</span>
+          <button class="cta cta--ghost" id="hero-viral-prev" type="button">◀ ANTERIOR</button>
+          <button class="cta cta--ghost" id="hero-viral-next" type="button">SIGUIENTE ▶</button>
+          <a class="cta" id="hero-viral-link" href="#">LEER CONTEXTO</a>
+          <span class="hero-story__meta" id="hero-viral-meta"></span>
         </div>
       </div>
     </article>`;
+
+  initHeroViralControls(heroVideos, 0);
 }
 
 function renderTrendingNow(newsList) {
@@ -327,13 +408,12 @@ function renderEditorialGrid(newsList) {
   container.innerHTML = "";
 
   const editorialSections = [
-    { id: "politica", label: "POLÍTICA", categories: ["Finanzas"], keywords: ["gobierno", "acuerdo", "congreso", "estado"] },
-    { id: "economia", label: "ECONOMÍA", categories: ["Finanzas", "Cripto"], keywords: ["mercado", "bolsa", "finanzas", "bitcoin", "ethereum"] },
-    { id: "tecnologia", label: "TECNOLOGÍA", categories: ["Tecnología", "Inteligencia Artificial"], keywords: ["ia", "software", "tecnología", "machine learning"] },
-    { id: "internacional", label: "INTERNACIONAL", categories: ["Salud", "Cripto"], keywords: ["mundo", "internacional", "global", "un", "europa"] },
-    { id: "deportes", label: "DEPORTES", categories: ["Deportes"], keywords: ["liga", "final", "deporte", "partido"] },
-    { id: "opinion", label: "OPINIÓN", categories: ["Entretenimiento"], keywords: ["análisis", "opinión", "debate", "reflexión"] },
-    { id: "cultura-ciencia", label: "CULTURA Y CIENCIA", categories: ["Entretenimiento", "Salud", "Tecnología"], keywords: ["cine", "ciencia", "cultura", "salud", "innovación"] }
+    { id: "politica", label: "POLÍTICA", categories: ["Economía"], keywords: ["gobierno", "congreso", "estado", "presidente", "reforma"] },
+    { id: "economia", label: "ECONOMÍA", categories: ["Economía"], keywords: ["mercado", "bolsa", "finanzas", "inversión", "negocios"] },
+    { id: "tecnologia", label: "TECNOLOGÍA", categories: ["Tecnología"], keywords: ["software", "tecnología", "innovación", "digital"] },
+    { id: "deportes", label: "DEPORTES", categories: ["Deportes"], keywords: ["liga", "final", "deporte", "partido", "equipo"] },
+    { id: "cultura-ciencia", label: "CULTURA Y CIENCIA", categories: ["Inteligencia Artificial", "Entretenimiento"], keywords: ["ciencia", "cultura", "ia", "cine", "investigación"] },
+    { id: "internacional", label: "INTERNACIONAL", categories: ["Entretenimiento", "Videojuegos"], keywords: ["mundo", "internacional", "global", "región", "país"] }
   ];
 
   editorialSections.forEach((section, index) => {
@@ -482,9 +562,7 @@ async function loadNews() {
     cachedNewsList = payload.news || [];
 
     renderCategoryFilters(cachedNewsList);
-    renderFeaturedStory(
-      [...cachedNewsList].sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))[0]
-    );
+    renderFeaturedStory(cachedNewsList);
     renderTrendingNow(cachedNewsList);
     renderVideos(cachedNewsList);
     renderNews(cachedNewsList, activeCategory);
