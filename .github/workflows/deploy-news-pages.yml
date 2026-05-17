@@ -40,7 +40,7 @@ jobs:
       - name: Build static artifact
         run: |
           mkdir -p dist
-          cp index.html dist/
+          cp *.html dist/
           cp styles.css dist/
           cp script.js dist/
           if [ -f ads.txt ]; then cp ads.txt dist/; fi
