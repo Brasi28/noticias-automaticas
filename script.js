@@ -159,87 +159,236 @@ function getYouTubeSearchEmbedUrl(category) {
   return `https://www.youtube.com/embed?listType=search&list=${query}&rel=0&modestbranding=1`;
 }
 
-function renderVideos() {
+function renderVideos(newsList = []) {
   if (!videoContainer) return;
 
-  videoContainer.innerHTML = "";
-  for (const category of VIDEO_CATEGORIES) {
-    const card = document.createElement("article");
-    card.className = "video-card";
-    card.innerHTML = `
-      <iframe
-        loading="lazy"
-        src="${getYouTubeSearchEmbedUrl(category)}"
-        title="Video recomendado de ${category}"
-        referrerpolicy="strict-origin-when-cross-origin"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen
-      ></iframe>
-      <p class="video-caption">Video recomendado: ${category}</p>
-    `;
-    videoContainer.appendChild(card);
-  }
-}
-
-// Crea las tarjetas de noticias con datos cargados del índice JSON.
-// Inyecta smart-ads cada AD_EVERY tarjetas usando el CTR acumulado por categoría.
-const AD_EVERY = 2; // Insertar un bloque de anuncio cada N tarjetas
-
-function renderNews(newsList, activeCategory = null) {
-  container.innerHTML = "";
-
-  const uniqueMap = new Map();
-  for (const item of newsList) {
-    if (!uniqueMap.has(item.slug)) {
-      uniqueMap.set(item.slug, item);
+  const latestByCategory = new Map();
+  for (const item of [...newsList].sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))) {
+    if (!latestByCategory.has(item.category)) {
+      latestByCategory.set(item.category, item);
     }
   }
 
-  let sortedNews = Array.from(uniqueMap.values()).sort(
-    (a, b) => new Date(b.generatedAt) - new Date(a.generatedAt)
-  );
+  const selectedVideos = Array.from(latestByCategory.values()).slice(0, 3);
+  const fallbackCategories = VIDEO_CATEGORIES.slice(0, 3);
 
-  // Filtrar por categoría activa si hay una seleccionada
-  if (activeCategory) {
-    sortedNews = sortedNews.filter((item) => item.category === activeCategory);
+  while (selectedVideos.length < 3) {
+    const fallbackCategory = fallbackCategories[selectedVideos.length];
+    if (!fallbackCategory) break;
+    selectedVideos.push({
+      category: fallbackCategory,
+      seoTitle: `Video destacado: ${fallbackCategory}`,
+      shortSummary: `Contenido audiovisual recomendado para ${fallbackCategory}.`,
+      fileName: "#videos-title",
+      thumbnail: ""
+    });
   }
 
-  if (!sortedNews.length) {
-    renderStatus(
-      activeCategory
-        ? `No hay noticias de "${activeCategory}" todavía.`
-        : "No hay noticias disponibles todavía. Ejecuta generate-news.js para publicarlas."
-    );
+  videoContainer.innerHTML = "";
+  selectedVideos.forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "video-card video-card--featured";
+    card.innerHTML = item.thumbnail
+      ? `
+      <a class="video-thumb" href="news/${item.fileName}">
+        <img src="${item.thumbnail}" alt="Miniatura de ${item.seoTitle}" loading="lazy" />
+        <span class="video-play" aria-hidden="true">▶</span>
+      </a>
+      <div class="video-copy">
+        <p class="video-kicker">Video destacado</p>
+        <h3>${item.seoTitle}</h3>
+        <p>${truncateByWords(item.shortSummary, 18)}</p>
+      </div>`
+      : `
+      <a class="video-thumb" href="#videos-title">
+        <div class="video-thumb-placeholder">
+          <span class="video-play" aria-hidden="true">▶</span>
+        </div>
+      </a>
+      <div class="video-copy">
+        <p class="video-kicker">Video destacado</p>
+        <h3>${item.seoTitle}</h3>
+        <p>${item.shortSummary}</p>
+      </div>`;
+    videoContainer.appendChild(card);
+  });
+}
+
+function getArticleByCategory(newsList, allowedCategories = [], keywords = []) {
+  const normalized = [...newsList].sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt));
+  const categoryMatches = normalized.filter((item) => allowedCategories.includes(item.category));
+  if (categoryMatches.length) return categoryMatches[0];
+
+  const keywordMatches = normalized.find((item) => {
+    const haystack = `${item.seoTitle} ${item.shortSummary} ${item.category} ${item.sourceName}`.toLowerCase();
+    return keywords.some((keyword) => haystack.includes(keyword.toLowerCase()));
+  });
+
+  return keywordMatches || normalized[0] || null;
+}
+
+function createNewsCard(item, extraClass = "") {
+  const fragment = cardTemplate.content.cloneNode(true);
+  const card = fragment.querySelector(".news-card");
+  const image = fragment.querySelector(".news-image");
+  const category = fragment.querySelector(".news-category");
+  const title = fragment.querySelector(".news-title");
+  const summary = fragment.querySelector(".news-summary");
+  const date = fragment.querySelector(".news-date");
+  const link = fragment.querySelector(".news-link");
+
+  if (extraClass) {
+    card.classList.add(extraClass);
+  }
+
+  image.src = item.thumbnail;
+  image.alt = `Miniatura: ${item.seoTitle}`;
+  category.textContent = item.category;
+  title.textContent = item.seoTitle;
+  summary.textContent = truncateByWords(item.shortSummary, 36);
+  date.textContent = new Date(item.generatedAt).toLocaleString("es-ES");
+  link.href = `news/${item.fileName}`;
+  link.textContent = "LEER MÁS";
+
+  return fragment;
+}
+
+function renderFeaturedStory(item) {
+  const featured = document.getElementById("featured-story");
+  if (!featured || !item) return;
+
+  featured.innerHTML = `
+    <article class="hero-story">
+      <div class="hero-story__media">
+        <img src="${item.thumbnail}" alt="Miniatura de ${item.seoTitle}" loading="eager" />
+        <div class="hero-story__badge">ÚLTIMA HORA</div>
+      </div>
+      <div class="hero-story__content">
+        <p class="hero-story__kicker">${item.category}</p>
+        <h2>${item.seoTitle}</h2>
+        <p>${truncateByWords(item.fullSummary, 42)}</p>
+        <div class="hero-story__actions">
+          <a class="cta" href="news/${item.fileName}">LEER MÁS</a>
+          <span class="hero-story__meta">${new Date(item.generatedAt).toLocaleString("es-ES")}</span>
+        </div>
+      </div>
+    </article>`;
+}
+
+function renderTrendingNow(newsList) {
+  const trendPanel = document.getElementById("trending-panel");
+  if (!trendPanel) return;
+
+  const topItems = [...newsList].sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt)).slice(0, 6);
+  trendPanel.innerHTML = `
+    <div class="panel-head">
+      <h2>TENDENCIAS AHORA</h2>
+      <p>Titulares breves con mayor actividad y novedad.</p>
+    </div>
+    <div class="trend-list">
+      ${topItems.map((item) => `
+        <a class="trend-item" href="news/${item.fileName}">
+          <img src="${item.thumbnail}" alt="Miniatura de ${item.seoTitle}" loading="lazy" />
+          <div>
+            <p>${item.category}</p>
+            <h3>${truncateByWords(item.seoTitle, 10)}</h3>
+          </div>
+        </a>`).join("")}
+    </div>`;
+}
+
+const AD_EVERY = 2;
+
+function renderEditorialGrid(newsList) {
+  container.innerHTML = "";
+
+  const editorialSections = [
+    { id: "politica", label: "POLÍTICA", categories: ["Finanzas"], keywords: ["gobierno", "acuerdo", "congreso", "estado"] },
+    { id: "economia", label: "ECONOMÍA", categories: ["Finanzas", "Cripto"], keywords: ["mercado", "bolsa", "finanzas", "bitcoin", "ethereum"] },
+    { id: "tecnologia", label: "TECNOLOGÍA", categories: ["Tecnología", "Inteligencia Artificial"], keywords: ["ia", "software", "tecnología", "machine learning"] },
+    { id: "internacional", label: "INTERNACIONAL", categories: ["Salud", "Cripto"], keywords: ["mundo", "internacional", "global", "un", "europa"] },
+    { id: "deportes", label: "DEPORTES", categories: ["Deportes"], keywords: ["liga", "final", "deporte", "partido"] },
+    { id: "opinion", label: "OPINIÓN", categories: ["Entretenimiento"], keywords: ["análisis", "opinión", "debate", "reflexión"] },
+    { id: "cultura-ciencia", label: "CULTURA Y CIENCIA", categories: ["Entretenimiento", "Salud", "Tecnología"], keywords: ["cine", "ciencia", "cultura", "salud", "innovación"] }
+  ];
+
+  editorialSections.forEach((section, index) => {
+    const item = getArticleByCategory(newsList, section.categories, section.keywords);
+    if (!item) return;
+
+    const sectionCard = document.createElement("article");
+    sectionCard.className = "section-card";
+    sectionCard.id = section.id;
+    sectionCard.innerHTML = `
+      <div class="section-card__header">
+        <p>${section.label}</p>
+        <span>${item.category}</span>
+      </div>
+      <a class="section-card__image" href="news/${item.fileName}">
+        <img src="${item.thumbnail}" alt="Miniatura de ${item.seoTitle}" loading="lazy" />
+      </a>
+      <div class="section-card__body">
+        <h3><a href="news/${item.fileName}">${item.seoTitle}</a></h3>
+        <p>${truncateByWords(item.shortSummary, 22)}</p>
+        <a class="cta cta--small" href="news/${item.fileName}">LEER MÁS</a>
+      </div>`;
+
+    container.appendChild(sectionCard);
+
+    if ((index + 1) % 4 === 0) {
+      const adBlock = document.createElement("section");
+      adBlock.className = "ad-shell ad-inline ad-inline--wide";
+      adBlock.innerHTML = `
+        <p class="ad-label">Publicidad</p>
+        <ins
+          class="adsbygoogle"
+          style="display:block"
+          data-ad-client="ca-pub-3049130201122598"
+          data-ad-slot="1234567890"
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        ></ins>`;
+      container.appendChild(adBlock);
+    }
+  });
+}
+
+function renderFeedList(newsList, activeCategory) {
+  container.innerHTML = "";
+  const items = [...newsList]
+    .filter((item) => !activeCategory || item.category === activeCategory)
+    .sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt));
+
+  if (!items.length) {
+    renderStatus(activeCategory ? `No hay noticias de "${activeCategory}" todavía.` : "No hay noticias disponibles todavía. Ejecuta generate-news.js para publicarlas.");
     return;
   }
 
-  let cardCount = 0;
-  for (const item of sortedNews) {
-    // Inyectar anuncio inteligente cada AD_EVERY tarjetas
-    if (cardCount > 0 && cardCount % AD_EVERY === 0) {
-      const adBlock = createSmartAdBlock(item.category, `mid_${Math.floor(cardCount / AD_EVERY)}`);
+  items.forEach((item, index) => {
+    if (index > 0 && index % AD_EVERY === 0) {
+      const adBlock = document.createElement("section");
+      adBlock.className = "ad-shell ad-inline ad-inline--wide";
+      adBlock.innerHTML = `
+        <p class="ad-label">Publicidad</p>
+        <ins
+          class="adsbygoogle"
+          style="display:block"
+          data-ad-client="ca-pub-3049130201122598"
+          data-ad-slot="1234567890"
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        ></ins>`;
       container.appendChild(adBlock);
     }
+    container.appendChild(createNewsCard(item));
+  });
+}
 
-    const fragment = cardTemplate.content.cloneNode(true);
-
-    const image = fragment.querySelector(".news-image");
-    const category = fragment.querySelector(".news-category");
-    const title = fragment.querySelector(".news-title");
-    const summary = fragment.querySelector(".news-summary");
-    const date = fragment.querySelector(".news-date");
-    const link = fragment.querySelector(".news-link");
-
-    image.src = item.thumbnail;
-    image.alt = `Miniatura: ${item.seoTitle}`;
-    category.textContent = item.category;
-    title.textContent = item.seoTitle;
-    summary.textContent = truncateByWords(item.shortSummary, 36);
-    date.textContent = new Date(item.generatedAt).toLocaleString("es-ES");
-    link.href = `news/${item.fileName}`;
-
-    container.appendChild(fragment);
-    cardCount++;
+function renderNews(newsList, activeCategory = null) {
+  if (activeCategory) {
+    renderFeedList(newsList, activeCategory);
+  } else {
+    renderEditorialGrid(newsList);
   }
 
   if (lastUpdateEl) {
@@ -309,6 +458,11 @@ async function loadNews() {
     cachedNewsList = payload.news || [];
 
     renderCategoryFilters(cachedNewsList);
+    renderFeaturedStory(
+      [...cachedNewsList].sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))[0]
+    );
+    renderTrendingNow(cachedNewsList);
+    renderVideos(cachedNewsList);
     renderNews(cachedNewsList, activeCategory);
 
     // JSON-LD dinámico con @graph: WebSite + ItemList para SEO del listado principal.
@@ -351,7 +505,6 @@ if (refreshBtn) {
 }
 
 // Carga inicial + recarga automática cada 30 minutos.
-renderVideos();
 loadNews();
 initAds();
 setInterval(() => {
