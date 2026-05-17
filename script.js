@@ -6,6 +6,16 @@ const container = document.getElementById("news-container");
 const cardTemplate = document.getElementById("news-card-template");
 const lastUpdateEl = document.getElementById("last-update");
 const refreshBtn = document.getElementById("refresh-btn");
+const videoContainer = document.getElementById("video-container");
+
+const VIDEO_CATEGORIES = [
+  "Tecnología",
+  "Inteligencia Artificial",
+  "Deportes",
+  "Economía",
+  "Videojuegos",
+  "Entretenimiento"
+];
 
 // Inicializa anuncios de AdSense sin romper la página si hay bloqueadores o falta configuración.
 function initAds() {
@@ -31,6 +41,33 @@ function truncateByWords(text, maxWords = 30) {
 // Renderiza una tarjeta de estado (cargando, vacío o error).
 function renderStatus(message) {
   container.innerHTML = `<article class="status-card"><p>${message}</p></article>`;
+}
+
+function getYouTubeSearchEmbedUrl(category) {
+  const query = encodeURIComponent(`noticias ${category} hoy`);
+  return `https://www.youtube.com/embed?listType=search&list=${query}&rel=0&modestbranding=1`;
+}
+
+function renderVideos() {
+  if (!videoContainer) return;
+
+  videoContainer.innerHTML = "";
+  for (const category of VIDEO_CATEGORIES) {
+    const card = document.createElement("article");
+    card.className = "video-card";
+    card.innerHTML = `
+      <iframe
+        loading="lazy"
+        src="${getYouTubeSearchEmbedUrl(category)}"
+        title="Video recomendado de ${category}"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+      ></iframe>
+      <p class="video-caption">Video recomendado: ${category}</p>
+    `;
+    videoContainer.appendChild(card);
+  }
 }
 
 // Crea las tarjetas de noticias con datos cargados del índice JSON.
@@ -123,6 +160,7 @@ if (refreshBtn) {
 }
 
 // Carga inicial + recarga automática cada 30 minutos.
+renderVideos();
 loadNews();
 initAds();
 setInterval(() => {

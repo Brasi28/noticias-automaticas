@@ -44,6 +44,7 @@ jobs:
           cp styles.css dist/
           cp script.js dist/
           cp .nojekyll dist/
+          if [ -f CNAME ]; then cp CNAME dist/; fi
           cp -r news dist/news
           cp -r assets dist/assets
 

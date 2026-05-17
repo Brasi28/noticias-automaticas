@@ -259,6 +259,7 @@ function buildNewsHtml(newsItem) {
   const safeSourceName = escapeHtml(newsItem.sourceName);
   const safeSourceUrl = escapeHtml(newsItem.sourceUrl);
   const safeImagePath = escapeHtml(articleImagePath);
+  const safeVideoUrl = escapeHtml(getYouTubeSearchEmbedUrl(newsItem.category));
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -305,6 +306,9 @@ function buildNewsHtml(newsItem) {
       .meta { color: #4c5c73; margin-bottom: 1rem; font-size: .92rem; }
       img { width: 100%; border-radius: 12px; aspect-ratio: 16 / 9; object-fit: cover; }
       p { line-height: 1.75; color: #27344c; }
+      .video-shell { margin-top: .9rem; border: 1px solid #d8ceb8; border-radius: 14px; overflow: hidden; background: #fff; }
+      .video-shell iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; display: block; }
+      .video-caption { margin: 0; padding: .55rem .75rem; color: #4c5c73; font-size: .85rem; font-weight: 700; }
       .ad-slot { border: 1px dashed #d8ceb8; border-radius: 14px; padding: .55rem; margin: .9rem 0; background: #fffcf4; }
       .ad-label { margin: 0 0 .4rem; color: #4c5c73; font-size: .74rem; text-transform: uppercase; font-weight: 700; letter-spacing: .04em; }
       .actions { margin-top: 1.2rem; display: flex; gap: .8rem; flex-wrap: wrap; }
@@ -336,6 +340,17 @@ ${JSON.stringify(jsonLd, null, 2)}
               data-ad-format="auto"
               data-full-width-responsive="true"
             ></ins>
+          </div>
+          <div class="video-shell" aria-label="Video relacionado">
+            <iframe
+              loading="lazy"
+              src="${safeVideoUrl}"
+              title="Video relacionado de ${safeCategory}"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+            ></iframe>
+            <p class="video-caption">Video relacionado: ${safeCategory}</p>
           </div>
           <p>${safeSummary}</p>
         </section>
@@ -372,6 +387,11 @@ ${JSON.stringify(jsonLd, null, 2)}
     </script>
   </body>
 </html>`;
+}
+
+function getYouTubeSearchEmbedUrl(category) {
+  const query = encodeURIComponent(`noticias ${category} hoy`);
+  return `https://www.youtube.com/embed?listType=search&list=${query}&rel=0&modestbranding=1`;
 }
 
 async function fetchCategoryNews(category) {
