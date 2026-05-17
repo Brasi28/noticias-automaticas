@@ -19,16 +19,22 @@ const ROOT_DIR = __dirname;
 const NEWS_DIR = path.join(ROOT_DIR, "news");
 const ASSETS_DIR = path.join(ROOT_DIR, "assets");
 const INDEX_FILE = path.join(NEWS_DIR, "news-index.json");
+const SCORES_FILE = path.join(NEWS_DIR, "category-scores.json");
+const LANDINGS_DIR = ROOT_DIR;
 const REFRESH_INTERVAL_MS = 1_800_000;
 const MAX_ITEMS_PER_CATEGORY = 2;
+// Número de ejecuciones con artículos para que se genere la landing SEO de una categoría.
+const SCORE_THRESHOLD = 1;
 
 const CATEGORIES = [
   { name: "Tecnología", query: "tecnologia OR innovación OR software" },
   { name: "Inteligencia Artificial", query: "inteligencia artificial OR machine learning OR IA" },
-  { name: "Deportes", query: "deportes OR futbol OR baloncesto" },
-  { name: "Economía", query: "economia OR finanzas OR mercados" },
+  { name: "Deportes", query: "deportes OR futbol OR baloncesto OR liga" },
+  { name: "Finanzas", query: "finanzas OR economia OR mercados OR bolsa" },
   { name: "Videojuegos", query: "videojuegos OR gaming OR esports" },
-  { name: "Entretenimiento", query: "entretenimiento OR cine OR series" }
+  { name: "Entretenimiento", query: "entretenimiento OR cine OR series" },
+  { name: "Salud", query: "salud OR medicina OR bienestar OR sanidad" },
+  { name: "Cripto", query: "criptomonedas OR bitcoin OR blockchain OR ethereum" }
 ];
 
 function loadDotEnv() {
@@ -53,6 +59,171 @@ function loadDotEnv() {
     }
   }
 }
+
+// ─── Category Score System ───────────────────────────────────────────────────
+
+function loadCategoryScores() {
+  if (!fs.existsSync(SCORES_FILE)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(SCORES_FILE, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function updateCategoryScore(scores, categoryName, articlesCount) {
+  if (!scores[categoryName]) {
+    scores[categoryName] = { score: 0, landingGenerated: false, lastUpdated: null };
+  }
+  if (articlesCount > 0) {
+    scores[categoryName].score += articlesCount;
+    scores[categoryName].lastUpdated = new Date().toISOString();
+  }
+}
+
+// Genera la landing SEO de una categoría con JSON-LD BreadcrumbList + CollectionPage.
+function buildCategoryLandingHtml(categoryName, categorySlug, articles) {
+  const baseUrl = "https://noticias.artillerosdelcaos.es/";
+  const safeCategory = escapeHtml(categoryName);
+
+  const articlesHtml = articles
+    .map((item) => {
+      const imgSrc = /^https?:\/\//i.test(item.thumbnail) ? item.thumbnail : `../${item.thumbnail}`;
+      return `    <article class="landing-card">
+      <a href="news/${escapeHtml(item.fileName)}">
+        <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.seoTitle)}" loading="lazy" />
+      </a>
+      <div class="landing-card-body">
+        <h2><a href="news/${escapeHtml(item.fileName)}">${escapeHtml(item.seoTitle)}</a></h2>
+        <p class="lc-summary">${escapeHtml(item.shortSummary)}</p>
+        <time datetime="${escapeHtml(item.generatedAt)}">${new Date(item.generatedAt).toLocaleString("es-ES")}</time>
+      </div>
+    </article>`;
+    })
+    .join("\n");
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Inicio", item: baseUrl },
+          { "@type": "ListItem", position: 2, name: categoryName, item: `${baseUrl}${categorySlug}.html` }
+        ]
+      },
+      {
+        "@type": "CollectionPage",
+        name: `Noticias de ${categoryName} – Última hora y análisis`,
+        url: `${baseUrl}${categorySlug}.html`,
+        description: `Las últimas noticias de ${categoryName} actualizadas automáticamente cada 30 minutos con análisis y contexto editorial.`,
+        inLanguage: "es",
+        publisher: { "@type": "Organization", name: "Noticias Automáticas" },
+        mainEntity: {
+          "@type": "ItemList",
+          itemListElement: articles.slice(0, 20).map((item, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            url: `${baseUrl}news/${item.fileName}`,
+            name: item.seoTitle
+          }))
+        }
+      }
+    ]
+  };
+
+  return `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Noticias de ${safeCategory} – Última hora y análisis</title>
+    <meta name="description" content="Las noticias más recientes de ${safeCategory}. Cobertura automática actualizada cada 30 minutos con contexto editorial." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="${baseUrl}${categorySlug}.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Noticias de ${safeCategory} – Última hora" />
+    <meta property="og:description" content="Cobertura automática de ${safeCategory}. Actualización cada 30 minutos." />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3049130201122598" crossorigin="anonymous"></script>
+    <meta name="google-adsense-account" content="ca-pub-3049130201122598" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script type="application/ld+json">
+${JSON.stringify(jsonLd, null, 2)}
+    </script>
+  </head>
+  <body>
+    <div class="bg-orb orb-1" aria-hidden="true"></div>
+    <div class="bg-orb orb-2" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <p class="eyebrow">Actualización automática cada 30 minutos</p>
+      <h1>Noticias de ${safeCategory}</h1>
+      <p class="lead">Cobertura en tiempo real con análisis y contexto editorial. Sección: ${safeCategory}.</p>
+      <nav class="category-nav" aria-label="Categorías principales">
+        <a href="index.html">Inicio</a>
+        <a href="deportes.html">Deportes</a>
+        <a href="salud.html">Salud</a>
+        <a href="finanzas.html">Finanzas</a>
+        <a href="cripto.html">Cripto</a>
+        <a href="tecnologia.html">Tecnología</a>
+        <a href="entretenimiento.html">Entretenimiento</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="ad-shell" aria-label="Espacio publicitario superior">
+        <p class="ad-label">Publicidad</p>
+        <ins class="adsbygoogle" style="display:block"
+          data-ad-client="ca-pub-3049130201122598"
+          data-ad-slot="1234567890"
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+          data-ad-category="${safeCategory}"
+          data-ad-position="top"
+        ></ins>
+      </section>
+
+      <section class="landing-grid" aria-label="Artículos de ${safeCategory}">
+${articlesHtml}
+      </section>
+
+      <section class="ad-shell ad-shell-bottom" aria-label="Espacio publicitario inferior">
+        <p class="ad-label">Publicidad</p>
+        <ins class="adsbygoogle" style="display:block"
+          data-ad-client="ca-pub-3049130201122598"
+          data-ad-slot="1234567890"
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+          data-ad-category="${safeCategory}"
+          data-ad-position="bottom"
+        ></ins>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Noticias de ${safeCategory} – Actualización automática cada 30 minutos.</p>
+      <p><a href="index.html" style="color:var(--brand);font-weight:700;">← Volver al inicio</a></p>
+    </footer>
+
+    <script>
+      document.querySelectorAll("ins.adsbygoogle").forEach(function (block) {
+        if (block.dataset.adsLoaded === "true") return;
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+          block.dataset.adsLoaded = "true";
+        } catch (e) {
+          console.debug("AdSense no disponible:", e && e.message ? e.message : e);
+        }
+      });
+    </script>
+  </body>
+</html>`;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 // Convierte fs.writeFile (callback) en promesa para usar async/await sin perder el requisito.
 function writeFileAsync(filePath, content) {
@@ -261,27 +432,37 @@ function buildNewsHtml(newsItem) {
   const safeImagePath = escapeHtml(articleImagePath);
   const safeVideoUrl = escapeHtml(getYouTubeSearchEmbedUrl(newsItem.category));
 
+  const videoEmbedUrl = getYouTubeSearchEmbedUrl(newsItem.category);
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "NewsArticle",
-    headline: newsItem.seoTitle,
-    datePublished: newsItem.generatedAt,
-    dateModified: newsItem.generatedAt,
-    inLanguage: "es",
-    image: [articleImagePath],
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": `./${newsItem.fileName}`
-    },
-    author: {
-      "@type": "Organization",
-      name: "Noticias Automáticas"
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "Noticias Automáticas"
-    },
-    description: newsItem.metaDescription
+    "@graph": [
+      {
+        "@type": "NewsArticle",
+        headline: newsItem.seoTitle,
+        datePublished: newsItem.generatedAt,
+        dateModified: newsItem.generatedAt,
+        inLanguage: "es",
+        image: [articleImagePath],
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": `./${newsItem.fileName}`
+        },
+        author: { "@type": "Organization", name: "Noticias Automáticas" },
+        publisher: { "@type": "Organization", name: "Noticias Automáticas" },
+        description: newsItem.metaDescription,
+        articleSection: newsItem.category
+      },
+      {
+        "@type": "VideoObject",
+        name: `Video relacionado: ${newsItem.seoTitle}`,
+        description: `Cobertura en video de noticias sobre ${newsItem.category} – ${newsItem.metaDescription}`,
+        embedUrl: videoEmbedUrl,
+        thumbnailUrl: articleImagePath,
+        uploadDate: newsItem.generatedAt,
+        inLanguage: "es",
+        publisher: { "@type": "Organization", name: "Noticias Automáticas" }
+      }
+    ]
   };
 
   return `<!doctype html>
@@ -489,6 +670,33 @@ async function actualizarNoticias() {
 
     await writeFileAsync(INDEX_FILE, JSON.stringify(payload, null, 2));
 
+    // ── Score tracking + autoexpansión de landings SEO por categoría ──────────
+    const scores = loadCategoryScores();
+
+    // Agrupar artículos por categoría
+    const byCategory = {};
+    for (const item of generatedNews) {
+      if (!byCategory[item.category]) byCategory[item.category] = [];
+      byCategory[item.category].push(item);
+    }
+
+    for (const [categoryName, items] of Object.entries(byCategory)) {
+      updateCategoryScore(scores, categoryName, items.length);
+
+      const catScore = scores[categoryName].score;
+      const catSlug = slugify(categoryName);
+
+      // Generar (o regenerar) landing cuando el score alcanza el umbral
+      if (catScore >= SCORE_THRESHOLD) {
+        const html = buildCategoryLandingHtml(categoryName, catSlug, items);
+        const landingPath = path.join(LANDINGS_DIR, `${catSlug}.html`);
+        await writeFileAsync(landingPath, html);
+        scores[categoryName].landingGenerated = true;
+        console.log(`  → Landing SEO generada: ${catSlug}.html (score ${catScore})`);
+      }
+    }
+
+    await writeFileAsync(SCORES_FILE, JSON.stringify(scores, null, 2));
     console.log(`Actualización finalizada. Noticias generadas: ${generatedNews.length}`);
   } catch (error) {
     console.error("Error general en la actualización:", error);

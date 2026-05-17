@@ -57,8 +57,16 @@
       <p class="eyebrow">Actualización automática cada 30 minutos</p>
       <h1>Noticias que se publican solas, listas para posicionar</h1>
       <p class="lead">
-        Cobertura de Tecnología, Inteligencia Artificial, Deportes, Economía, Videojuegos y Entretenimiento.
+        Cobertura de Tecnología, IA, Deportes, Finanzas, Cripto, Salud, Videojuegos y Entretenimiento.
       </p>
+      <nav class="category-nav" aria-label="Páginas de categoría">
+        <a href="deportes.html">Deportes</a>
+        <a href="salud.html">Salud</a>
+        <a href="finanzas.html">Finanzas</a>
+        <a href="cripto.html">Cripto</a>
+        <a href="tecnologia.html">Tecnología</a>
+        <a href="entretenimiento.html">Entretenimiento</a>
+      </nav>
       <div class="header-meta">
         <span id="last-update">Cargando fecha de actualización...</span>
         <button id="refresh-btn" type="button" aria-label="Actualizar noticias">Actualizar ahora</button>
@@ -77,6 +85,10 @@
           data-full-width-responsive="true"
         ></ins>
       </section>
+
+      <nav class="cat-filter-bar" id="category-filter-nav" aria-label="Filtrar por categoría">
+        <!-- Botones generados dinámicamente desde script.js según CTR -->
+      </nav>
 
       <section class="cards-grid" id="news-container" aria-live="polite">
         <!-- Las tarjetas de noticias se insertan automáticamente desde script.js -->

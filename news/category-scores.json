@@ -1,0 +1,42 @@
+{
+  "Tecnología": {
+    "score": 2,
+    "landingGenerated": true,
+    "lastUpdated": "2026-05-17T16:12:53.119Z"
+  },
+  "Inteligencia Artificial": {
+    "score": 2,
+    "landingGenerated": true,
+    "lastUpdated": "2026-05-17T16:12:53.138Z"
+  },
+  "Deportes": {
+    "score": 2,
+    "landingGenerated": true,
+    "lastUpdated": "2026-05-17T16:12:53.154Z"
+  },
+  "Finanzas": {
+    "score": 2,
+    "landingGenerated": true,
+    "lastUpdated": "2026-05-17T16:12:53.166Z"
+  },
+  "Videojuegos": {
+    "score": 2,
+    "landingGenerated": true,
+    "lastUpdated": "2026-05-17T16:12:53.178Z"
+  },
+  "Entretenimiento": {
+    "score": 2,
+    "landingGenerated": true,
+    "lastUpdated": "2026-05-17T16:12:53.193Z"
+  },
+  "Salud": {
+    "score": 2,
+    "landingGenerated": true,
+    "lastUpdated": "2026-05-17T16:12:53.208Z"
+  },
+  "Cripto": {
+    "score": 2,
+    "landingGenerated": true,
+    "lastUpdated": "2026-05-17T16:12:53.223Z"
+  }
+}
