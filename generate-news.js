@@ -37,6 +37,22 @@ const CATEGORIES = [
   { name: "Cripto", query: "criptomonedas OR bitcoin OR blockchain OR ethereum" }
 ];
 
+let freeAiGenerator = null;
+
+function loadFreeAISystem() {
+  try {
+    const pro = require("./news-generator-pro.js");
+    if (pro && typeof pro.generateProfessionalNews === "function") {
+      freeAiGenerator = pro;
+      console.log("✅ IA redactora gratis activa en producción");
+      return true;
+    }
+  } catch (error) {
+    console.log("⚠️ IA redactora gratis no disponible, usando fallback:", error.message);
+  }
+  return false;
+}
+
 function loadDotEnv() {
   const envPath = path.join(ROOT_DIR, ".env");
   if (!fs.existsSync(envPath)) return;
@@ -419,6 +435,64 @@ function createMetaDescription(summary) {
   return words.slice(0, 24).join(" ") + "...";
 }
 
+function extractKeywords(title, description) {
+  const text = `${stripHtml(title)} ${stripHtml(description)}`.toLowerCase();
+  const words = text
+    .split(/\s+/)
+    .map((w) => w.trim())
+    .filter((w) => w.length > 4);
+
+  return [...new Set(words)].slice(0, 6);
+}
+
+async function buildNewsCopy(raw) {
+  if (!freeAiGenerator) {
+    const fullSummary = buildSummary({
+      title: raw.title,
+      description: raw.description,
+      category: raw.category,
+      source: raw.source
+    });
+
+    return {
+      seoTitle: createSeoTitle(raw.title, raw.category),
+      fullSummary
+    };
+  }
+
+  try {
+    const aiResult = await freeAiGenerator.generateProfessionalNews({
+      topic: raw.title,
+      category: raw.category,
+      keywords: extractKeywords(raw.title, raw.description),
+      details: raw.description
+    });
+
+    return {
+      seoTitle: aiResult.titulo_final || createSeoTitle(raw.title, raw.category),
+      fullSummary: aiResult.cuerpo || buildSummary({
+        title: raw.title,
+        description: raw.description,
+        category: raw.category,
+        source: raw.source
+      })
+    };
+  } catch (error) {
+    console.log(`⚠️ IA no pudo redactar "${raw.title.slice(0, 55)}...", usando fallback.`);
+    const fullSummary = buildSummary({
+      title: raw.title,
+      description: raw.description,
+      category: raw.category,
+      source: raw.source
+    });
+
+    return {
+      seoTitle: createSeoTitle(raw.title, raw.category),
+      fullSummary
+    };
+  }
+}
+
 function escapeHtml(text = "") {
   return String(text)
     .replace(/&/g, "&amp;")
@@ -778,6 +852,7 @@ async function actualizarNoticias() {
   try {
     console.log(`[${new Date().toISOString()}] Iniciando actualización automática...`);
     ensureDirectories();
+    loadFreeAISystem();
 
     const allFetched = [];
     for (const category of CATEGORIES) {
@@ -805,15 +880,11 @@ async function actualizarNoticias() {
 
     for (const raw of uniqueNews) {
       const slug = slugify(raw.title || `${raw.category}-noticia`);
-      const seoTitle = createSeoTitle(raw.title, raw.category);
+      const redactedNews = await buildNewsCopy(raw);
+      const seoTitle = redactedNews.seoTitle;
       const remoteThumbnailUrl = await resolveThumbnailUrl(raw.category, slug);
       const thumbnail = await saveThumbnailLocally(remoteThumbnailUrl, slug);
-      const fullSummary = buildSummary({
-        title: raw.title,
-        description: raw.description,
-        category: raw.category,
-        source: raw.source
-      });
+      const fullSummary = redactedNews.fullSummary;
       const metaDescription = createMetaDescription(fullSummary);
       const shortSummary = fullSummary.split(" ").slice(0, 35).join(" ") + "...";
       const fileName = `noticia-${dateForFile}-${slug}.html`;

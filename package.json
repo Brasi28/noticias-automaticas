@@ -6,5 +6,6 @@
   "scripts": {
     "generate": "node generate-news.js",
     "generate:once": "node generate-news.js --once"
-  }
+  },
+  "dependencies": {}
 }

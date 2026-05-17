@@ -1,0 +1,130 @@
+{
+  "prompts_redactora": {
+    "tecnologia": {
+      "tone": "informativo, técnico pero accesible",
+      "focus": "impacto en usuarios finales, innovación",
+      "evitar": "jerga excesiva, tecnicismos sin explicación"
+    },
+    "economia": {
+      "tone": "analítico, contextual",
+      "focus": "impacto económico, oportunidades, riesgos",
+      "evitar": "predicciones sin base, alarmas infundadas"
+    },
+    "deportes": {
+      "tone": "dinámico, pasional pero profesional",
+      "focus": "emoción, análisis, contexto",
+      "evitar": "favoritismo, especulación sin datos"
+    },
+    "salud": {
+      "tone": "cuidadoso, verificado, humanizado",
+      "focus": "impacto en personas, contexto científico",
+      "evitar": "misinformación, promesas no comprobadas"
+    },
+    "politica": {
+      "tone": "neutral, contextual, verificado",
+      "focus": "hechos, impacto social, análisis equilibrado",
+      "evitar": "sesgo editorial, especulación política"
+    },
+    "entretenimiento": {
+      "tone": "ameno, accesible, entretenido",
+      "focus": "relevancia cultural, interés humano",
+      "evitar": "gossip infundado, especulación"
+    }
+  },
+  "frases_prohibidas": [
+    "en conclusión",
+    "según informes",
+    "esto marca un hito",
+    "como modelo de IA",
+    "por otro lado",
+    "además",
+    "esta situación ha generado debate",
+    "según expertos",
+    "cabe destacar",
+    "es importante señalar",
+    "sin embargo",
+    "en cualquier caso",
+    "dicho de otro modo",
+    "es decir",
+    "evidentemente",
+    "claramente",
+    "lógicamente",
+    "naturalmente"
+  ],
+  "conectores_naturales_reales": [
+    "Lo cierto es que",
+    "La realidad es",
+    "Lo que sucede es",
+    "Así las cosas",
+    "De hecho",
+    "En la práctica",
+    "Lo que está pasando",
+    "En el día a día",
+    "En términos reales",
+    "Ahora mismo",
+    "Por el momento",
+    "A día de hoy"
+  ],
+  "estructuras_periodisticas_naturales": {
+    "introduccion_noticia": [
+      "Un hecho inesperado ha sacudido [contexto].",
+      "[Sujeto] ha [acción], sorprendiendo a [público].",
+      "Algo cambió en [lugar/contexto] cuando [evento].",
+      "El panorama de [tema] dio un giro cuando [hecho]."
+    ],
+    "desarrollo_contexto": [
+      "Los antecedentes remontan a [momento].",
+      "Esto no sucede de la nada. Hace meses que [contexto].",
+      "La situación viene gestándose desde [fecha/período].",
+      "Hay que remontarse a [contexto] para entender esto."
+    ],
+    "cierre_natural": [
+      "De momento, [desarrollo].",
+      "Lo inmediato es [próximo paso].",
+      "Ahora toca esperar a [qué sigue].",
+      "Por ahora, esto es lo que sabemos."
+    ]
+  },
+  "variaciones_linguisticas": {
+    "afirmacion_fuerte": [
+      "De verdad que",
+      "La cosa es que",
+      "La cuestión es que",
+      "Lo que pasa es",
+      "Realmente",
+      "En serio"
+    ],
+    "transicion_suave": [
+      "Justo ahora",
+      "Precisamente",
+      "O sea",
+      "Pues bien",
+      "Entonces",
+      "Como quiera"
+    ],
+    "enfasis_moderado": [
+      "No es poco",
+      "Hay que verlo claro",
+      "Está claro que",
+      "Lo evidente es",
+      "Salta a la vista"
+    ]
+  },
+  "checklist_humanizacion": [
+    "¿Hay frases de más de 25 palabras? Dividir.",
+    "¿Se repite la misma palabra en 2 párrafos seguidos? Buscar sinónimo.",
+    "¿Hay 3 puntos seguidos con la misma estructura gramatical? Variar.",
+    "¿Hay conectores genéricos como 'además', 'por otro lado'? Eliminar o cambiar.",
+    "¿El texto suena como lista? Hacerlo narrativo.",
+    "¿Hay datos sin contexto humano? Añadir impacto real.",
+    "¿Falta ritmo o emoción controlada? Buscar angle humano."
+  ],
+  "alt_tags_por_categoria": {
+    "tecnologia": "Foto de [objeto/concepto] mostrando [detalles técnicos relevantes]",
+    "economia": "Gráfico de [dato específico] con [contexto temporal]",
+    "deportes": "Momento clave del partido/evento entre [actores relevantes]",
+    "salud": "Ilustración o foto referencial sobre [tema médico específico]",
+    "politica": "Acto político con presencia de [actores principales]",
+    "entretenimiento": "Escena o momento del evento/película/serie [específico]"
+  }
+}

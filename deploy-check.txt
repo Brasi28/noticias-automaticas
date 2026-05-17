@@ -1,0 +1,21 @@
+﻿E:\canales de interes\assets\logo-artilleros-caos.png | 1328729
+E:\canales de interes\assets\frames\frame1.png | 3400145
+E:\canales de interes\assets\frames\frame2.png | 1946492
+--- git status --short ---
+ M news/news-index.json
+ M news/noticia-20260517-alfonso-parot-lamento-las-expulsiones-en-la-derrota-de-deportes-limache-con-univ.html
+ M news/noticia-20260517-casos-de-uso-de-machine-learning-aplicaciones-practicas-en-la-industria-databric.html
+ M news/noticia-20260517-cine-de-animacion-mexicano-llega-a-cannes-con-la-cinta-la-marca-del-jaguar-la-jo.html
+ M news/noticia-20260517-el-exsecretario-de-finanzas-de-sinaloa-enrique-diaz-el-segundo-acusado-que-se-en.html
+ M news/noticia-20260517-emprende-biotec-impulsa-innovacion-cientifica-entre-estudiantes-upaep-upress-mx.html
+ M news/noticia-20260517-estudiantes-de-cuaad-llegan-a-ficgames-con-propuestas-de-videojuegos-universidad.html
+ M news/noticia-20260517-impulsa-la-facultad-de-agronomia-de-la-uas-innovacion-genetica-en-el-cultivo-de-.html
+ M news/noticia-20260517-la-inteligencia-artificial-tiene-bondades-pero-no-sustituye-a-los-humanos-victor.html
+ M news/noticia-20260517-mexico-transita-hacia-finanzas-sostenibles-destaca-carlos-lerma-cotera-dgcs-unam.html
+ M news/noticia-20260517-no-lo-creerias-conoce-el-ano-en-que-llego-el-cine-mudo-a-parral-el-sol-de-mexico.html
+ M news/noticia-20260517-ps5-hara-te-dira-cuales-son-los-titulos-mas-jugados-con-esta-nueva-caracteristic.html
+?? "imagen web/"
+?? news/noticia-20260517-cruz-azul-primer-finalista-de-la-liga-mx-con-un-triunfo-agonico-la-jornada.html
+?? news/noticia-20260517-futbol-estufa-liga-mx-altas-bajas-y-rumores-rumbo-al-apertura-2026-tudn.html
+--- git branch -vv ---
+* main 1972e83 [origin/main] Reemplaza logo y marcos con im├ígenes reales
