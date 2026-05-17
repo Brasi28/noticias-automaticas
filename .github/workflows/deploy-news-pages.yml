@@ -43,6 +43,7 @@ jobs:
           cp index.html dist/
           cp styles.css dist/
           cp script.js dist/
+          if [ -f ads.txt ]; then cp ads.txt dist/; fi
           cp .nojekyll dist/
           if [ -f CNAME ]; then cp CNAME dist/; fi
           cp -r news dist/news
