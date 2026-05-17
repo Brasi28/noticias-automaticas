@@ -22,7 +22,7 @@ const INDEX_FILE = path.join(NEWS_DIR, "news-index.json");
 const SCORES_FILE = path.join(NEWS_DIR, "category-scores.json");
 const LANDINGS_DIR = ROOT_DIR;
 const REFRESH_INTERVAL_MS = 1_800_000;
-const MAX_ITEMS_PER_CATEGORY = 2;
+const MAX_ITEMS_PER_CATEGORY = 3;
 // Número de ejecuciones con artículos para que se genere la landing SEO de una categoría.
 const SCORE_THRESHOLD = 1;
 
@@ -507,6 +507,7 @@ function buildNewsHtml(newsItem) {
       .legal-nav { margin-top: .9rem; display: flex; flex-wrap: wrap; gap: .55rem; }
       .legal-nav a { color: #0b7285; text-decoration: none; font-weight: 700; font-size: .85rem; }
       .legal-nav a:hover { text-decoration: underline; }
+      .ad-micro-grid { display: grid; gap: .9rem; margin: .9rem 0; }
       footer { margin-top: 1rem; color: #4c5c73; font-size: .9rem; }
     </style>
     <script type="application/ld+json">
@@ -524,6 +525,17 @@ ${JSON.stringify(jsonLd, null, 2)}
         <section>
           <img src="${safeImagePath}" alt="Imagen de ${safeCategory}" loading="lazy" />
           <div class="ad-slot" aria-label="Espacio publicitario en contenido">
+            <p class="ad-label">Publicidad</p>
+            <ins
+              class="adsbygoogle"
+              style="display:block"
+              data-ad-client="ca-pub-3049130201122598"
+              data-ad-slot="1234567890"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            ></ins>
+          </div>
+          <div class="ad-slot" aria-label="Espacio publicitario intermedio">
             <p class="ad-label">Publicidad</p>
             <ins
               class="adsbygoogle"
@@ -632,6 +644,13 @@ function buildLegalPageHtml({ title, description, heading, sections }) {
         ${renderLegalLinks("")}
       </section>
 
+      <div class="ad-micro-grid">
+        <section class="ad-slot" aria-label="Espacio publicitario legal superior">
+          <p class="ad-label">Publicidad</p>
+          <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-3049130201122598" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
+        </section>
+      </div>
+
 ${sectionHtml}
 
       <footer>
@@ -640,6 +659,17 @@ ${sectionHtml}
         <p><a href="index.html">← Volver al inicio</a></p>
       </footer>
     </main>
+    <script>
+      document.querySelectorAll("ins.adsbygoogle").forEach(function (block) {
+        if (block.dataset.adsLoaded === "true") return;
+        try {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+          block.dataset.adsLoaded = "true";
+        } catch (e) {
+          console.debug("AdSense no disponible:", e && e.message ? e.message : e);
+        }
+      });
+    </script>
   </body>
 </html>`;
 }

@@ -157,7 +157,7 @@ function renderVideos() {
 
 // Crea las tarjetas de noticias con datos cargados del índice JSON.
 // Inyecta smart-ads cada AD_EVERY tarjetas usando el CTR acumulado por categoría.
-const AD_EVERY = 3; // Insertar un bloque de anuncio cada N tarjetas
+const AD_EVERY = 2; // Insertar un bloque de anuncio cada N tarjetas
 
 function renderNews(newsList, activeCategory = null) {
   container.innerHTML = "";
