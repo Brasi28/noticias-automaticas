@@ -1,0 +1,115 @@
+@using BlazorApp1.Models
+@using BlazorApp1.Services
+@inject TrendContentService TrendService
+
+@if (_isLoading)
+{
+    <section class="topic-hero shimmer-block">
+        <h1>@Title</h1>
+        <p>Cargando noticias y videos de alto interes...</p>
+    </section>
+}
+else if (_data is null)
+{
+    <section class="topic-hero">
+        <h1>@Title</h1>
+        <p>No se pudo cargar el contenido ahora. Intenta de nuevo en unos minutos.</p>
+    </section>
+}
+else
+{
+    <section class="topic-hero">
+        <span class="topic-tag">@Tagline</span>
+        <h1>@Title</h1>
+        <p>@Description</p>
+        <small>Actualizado: @_data.RetrievedAtUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+    </section>
+
+    <section class="ad-slot ad-inline" aria-label="Espacio publicitario superior">
+        Publicidad premium
+    </section>
+
+    <section class="topic-section">
+        <h2>Noticias que estan liderando busquedas</h2>
+        <div class="news-grid">
+            @foreach (var article in _data.Articles)
+            {
+                <article class="news-card">
+                    <h3>@article.Title</h3>
+                    <p>@article.Summary</p>
+                    <div class="card-meta">
+                        <span>@article.Source</span>
+                        <span>@article.PublishedAtUtc.ToLocalTime().ToString("dd/MM HH:mm")</span>
+                    </div>
+                    <a href="@article.Url" target="_blank" rel="noopener noreferrer">Leer noticia completa</a>
+                </article>
+            }
+        </div>
+    </section>
+
+    <section class="ad-slot ad-inline" aria-label="Espacio publicitario intermedio">
+        Publicidad segmentada
+    </section>
+
+    <section class="topic-section">
+        <h2>Videos de YouTube con potencial viral</h2>
+        <div class="video-grid">
+            @foreach (var video in _data.Videos)
+            {
+                <article class="video-card">
+                    <div class="video-frame">
+                        <iframe src="@video.EmbedUrl"
+                                title="@video.Title"
+                                loading="lazy"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                referrerpolicy="strict-origin-when-cross-origin"
+                                allowfullscreen>
+                        </iframe>
+                    </div>
+                    <h3>@video.Title</h3>
+                    <p>@video.Views.ToString("N0") visualizaciones estimadas</p>
+                    <a href="@video.WatchUrl" target="_blank" rel="noopener noreferrer">Ver en YouTube</a>
+                </article>
+            }
+        </div>
+    </section>
+
+    <section class="topic-section cta-strip">
+        <h2>Mas usuarios, mas clics, mas monetizacion</h2>
+        <p>Este canal esta optimizado para atraer trafico por intencion de busqueda y mejorar el tiempo de permanencia con contenido de interes real.</p>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public string TopicKey { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Description { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Tagline { get; set; } = "Tendencia";
+
+    [Parameter]
+    public Func<string, CancellationToken, Task<TopicPageData>>? DataProvider { get; set; }
+
+    private TopicPageData? _data;
+    private bool _isLoading;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _isLoading = true;
+        if (DataProvider is not null)
+        {
+            _data = await DataProvider.Invoke(TopicKey, CancellationToken.None);
+        }
+        else
+        {
+            _data = await TrendService.GetTopicDataAsync(TopicKey);
+        }
+        _isLoading = false;
+    }
+}

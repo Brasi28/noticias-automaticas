@@ -1,7 +1,39 @@
 ﻿@page "/"
+@inject BlazorApp1.Services.InterestAutomationService InterestService
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Portal de Intereses | Noticias y videos por categoria</PageTitle>
 
-<h1>Hello, world!</h1>
+<HeadContent>
+	<meta name="description" content="Portal de noticias por intereses: juegos, tecnologia y cocina con contenido de alto interes y videos en tendencia." />
+	<meta name="keywords" content="noticias, juegos, tecnologia, cocina, videos virales, portal SEO" />
+	<meta property="og:title" content="Portal de intereses en tendencia" />
+	<meta property="og:description" content="Explora categorias independientes con noticias y videos de alto impacto." />
+	<meta property="og:type" content="website" />
+</HeadContent>
 
-Welcome to your new app.
+<section class="topic-hero">
+	<span class="topic-tag">Portada principal</span>
+	<h1>Explora noticias por temas que generan busquedas reales</h1>
+	<p>Entra a tu categoria favorita y encuentra contenido actualizado con enfoque en retencion, clics y monetizacion.</p>
+</section>
+
+<section class="home-categories">
+	@foreach (var category in _categories)
+	{
+		<article class="category-card">
+			<h2>@category.Name</h2>
+			<p>@category.Description</p>
+			<a href="/canal/@category.Slug">Ir al canal</a>
+		</article>
+	}
+</section>
+
+@code {
+	private IReadOnlyList<BlazorApp1.Models.InterestCategory> _categories = [];
+
+	protected override async Task OnInitializedAsync()
+	{
+		await InterestService.EnsureFreshDataAsync();
+		_categories = InterestService.GetCategories();
+	}
+}

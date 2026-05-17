@@ -1,10 +1,14 @@
 using BlazorApp1.Components;
+using BlazorApp1.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddHttpClient<TrendContentService>();
+builder.Services.AddHttpClient<InterestAutomationService>();
+builder.Services.AddHostedService<InterestRefreshHostedService>();
 
 var app = builder.Build();
 

@@ -27,6 +27,18 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/canales de interes/BlazorApp1/Components/Pages/Canal.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDYW5hbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/canales de interes/BlazorApp1/Components/Pages/Categorias.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDYXRlZ29yaWFzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/canales de interes/BlazorApp1/Components/Pages/Cocina.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb2NpbmEucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/canales de interes/BlazorApp1/Components/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb3VudGVyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
@@ -39,8 +51,16 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIb21lLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/canales de interes/BlazorApp1/Components/Pages/Juegos.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xKdWVnb3MucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/canales de interes/BlazorApp1/Components/Pages/NotFound.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xOb3RGb3VuZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/canales de interes/BlazorApp1/Components/Pages/Tecnologia.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xUZWNub2xvZ2lhLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
 [E:/canales de interes/BlazorApp1/Components/Pages/Weather.razor]
@@ -49,6 +69,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [E:/canales de interes/BlazorApp1/Components/Routes.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
+[E:/canales de interes/BlazorApp1/Components/Shared/TopicPageView.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xTaGFyZWRcVG9waWNQYWdlVmlldy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [E:/canales de interes/BlazorApp1/Components/_Imports.razor]

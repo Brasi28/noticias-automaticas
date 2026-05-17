@@ -1,5 +1,12 @@
 ﻿@inherits LayoutComponentBase
 
+
+<div class="lateral-ads left">
+    <div id="ad-left-1" class="ad-slot ad-rail" aria-label="Publicidad lateral izquierda">
+        Publicidad
+    </div>
+</div>
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -7,13 +14,22 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <a href="/">Portada</a>
+            <a href="/juegos">Juegos</a>
+            <a href="/tecnologia">Tecnologia</a>
+            <a href="/cocina">Cocina</a>
         </div>
 
         <article class="content px-4">
             @Body
         </article>
     </main>
+</div>
+
+<div class="lateral-ads right">
+    <div id="ad-right-1" class="ad-slot ad-rail" aria-label="Publicidad lateral derecha">
+        Publicidad
+    </div>
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>

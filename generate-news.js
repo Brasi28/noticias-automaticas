@@ -86,22 +86,6 @@ function buildCategoryLandingHtml(categoryName, categorySlug, articles) {
   const baseUrl = "https://noticias.artillerosdelcaos.es/";
   const safeCategory = escapeHtml(categoryName);
 
-  const articlesHtml = articles
-    .map((item) => {
-      const imgSrc = /^https?:\/\//i.test(item.thumbnail) ? item.thumbnail : `../${item.thumbnail}`;
-      return `    <article class="landing-card">
-      <a href="news/${escapeHtml(item.fileName)}">
-        <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.seoTitle)}" loading="lazy" />
-      </a>
-      <div class="landing-card-body">
-        <h2><a href="news/${escapeHtml(item.fileName)}">${escapeHtml(item.seoTitle)}</a></h2>
-        <p class="lc-summary">${escapeHtml(item.shortSummary)}</p>
-        <time datetime="${escapeHtml(item.generatedAt)}">${new Date(item.generatedAt).toLocaleString("es-ES")}</time>
-      </div>
-    </article>`;
-    })
-    .join("\n");
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -114,11 +98,11 @@ function buildCategoryLandingHtml(categoryName, categorySlug, articles) {
       },
       {
         "@type": "CollectionPage",
-        name: `Noticias de ${categoryName} – Última hora y análisis`,
+        name: `Noticias de ${categoryName}`,
         url: `${baseUrl}${categorySlug}.html`,
-        description: `Las últimas noticias de ${categoryName} actualizadas automáticamente cada 30 minutos con análisis y contexto editorial.`,
+        description: `Sección independiente de ${categoryName} con noticias y tendencias actualizadas automáticamente.`,
         inLanguage: "es",
-        publisher: { "@type": "Organization", name: "Noticias Automáticas" },
+        publisher: { "@type": "Organization", name: "Noticias Artilleros del Caos" },
         mainEntity: {
           "@type": "ItemList",
           itemListElement: articles.slice(0, 20).map((item, index) => ({
@@ -137,88 +121,114 @@ function buildCategoryLandingHtml(categoryName, categorySlug, articles) {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Noticias de ${safeCategory} – Última hora y análisis</title>
-    <meta name="description" content="Las noticias más recientes de ${safeCategory}. Cobertura automática actualizada cada 30 minutos con contexto editorial." />
+    <title>Noticias de ${safeCategory} | Artilleros del Caos</title>
+    <meta name="description" content="Noticias de ${safeCategory} con cobertura continua, visual profesional y enfoque en información de alto impacto." />
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href="${baseUrl}${categorySlug}.html" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Noticias de ${safeCategory} – Última hora" />
-    <meta property="og:description" content="Cobertura automática de ${safeCategory}. Actualización cada 30 minutos." />
+    <meta property="og:title" content="Noticias de ${safeCategory} | Artilleros del Caos" />
+    <meta property="og:description" content="Sección independiente de ${safeCategory} con noticias relacionadas, destacadas y actualización automática." />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3049130201122598" crossorigin="anonymous"></script>
     <meta name="google-adsense-account" content="ca-pub-3049130201122598" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
     <script type="application/ld+json">
 ${JSON.stringify(jsonLd, null, 2)}
     </script>
   </head>
-  <body>
+  <body class="category-page" data-category="${safeCategory}" data-category-label="${safeCategory}" data-category-slug="${categorySlug}">
     <div class="bg-orb orb-1" aria-hidden="true"></div>
     <div class="bg-orb orb-2" aria-hidden="true"></div>
 
-    <header class="site-header">
-      <p class="eyebrow">Actualización automática cada 30 minutos</p>
-      <h1>Noticias de ${safeCategory}</h1>
-      <p class="lead">Cobertura en tiempo real con análisis y contexto editorial. Sección: ${safeCategory}.</p>
-      <nav class="category-nav" aria-label="Categorías principales">
-        <a href="index.html">Inicio</a>
-        <a href="deportes.html">Deportes</a>
-        <a href="salud.html">Salud</a>
-        <a href="finanzas.html">Finanzas</a>
-        <a href="cripto.html">Cripto</a>
-        <a href="tecnologia.html">Tecnología</a>
-        <a href="entretenimiento.html">Entretenimiento</a>
+    <header class="site-header site-header--pro">
+      <div class="brand-row">
+        <a class="brand-mark" href="index.html" aria-label="Noticias Artilleros del Caos, portada">
+          <img class="brand-logo-image" src="assets/logo-artilleros-caos.png" alt="Logo Noticias Artilleros del Caos" loading="eager" decoding="async" />
+        </a>
+        <div class="brand-copy">
+          <p class="eyebrow">Noticias Artilleros del Caos</p>
+          <h1>Información que no espera a nadie</h1>
+          <p class="lead">Sección de ${safeCategory}. Cobertura directa, titulares calientes y actualización automática.</p>
+        </div>
+        <div class="brand-actions">
+          <a class="header-action" href="index.html">PORTADA</a>
+          <a class="header-action header-action--solid" href="#category-videos">VIDEOS</a>
+        </div>
+      </div>
+
+      <nav class="top-nav" aria-label="Menú principal">
+        <a href="index.html">PORTADA</a>
+        <a href="tecnologia.html">TECNOLOGÍA</a>
+        <a href="inteligencia-artificial.html">IA</a>
+        <a href="deportes.html">DEPORTES</a>
+        <a href="finanzas.html">FINANZAS</a>
+        <a href="videojuegos.html">VIDEOJUEGOS</a>
+        <a href="entretenimiento.html">ENTRETENIMIENTO</a>
+        <a href="salud.html">SALUD</a>
+        <a href="cripto.html">CRIPTO</a>
       </nav>
+
+      <div class="header-meta">
+        <span id="last-update">Cargando fecha de actualización...</span>
+      </div>
     </header>
 
-    <main>
-      <section class="ad-shell" aria-label="Espacio publicitario superior">
-        <p class="ad-label">Publicidad</p>
-        <ins class="adsbygoogle" style="display:block"
-          data-ad-client="ca-pub-3049130201122598"
-          data-ad-slot="1234567890"
-          data-ad-format="auto"
-          data-full-width-responsive="true"
-          data-ad-category="${safeCategory}"
-          data-ad-position="top"
-        ></ins>
+    <main class="category-shell">
+      <section class="category-headline" aria-label="Titular de sección">
+        <h2>${safeCategory}</h2>
       </section>
 
-      <section class="landing-grid" aria-label="Artículos de ${safeCategory}">
-${articlesHtml}
+      <section class="category-layout" aria-label="Bloque principal de ${safeCategory}">
+        <article class="category-hero" id="category-hero"></article>
+
+        <aside class="category-side-ad" aria-label="Espacio publicitario lateral">
+          <p class="ad-label">ESPACIO PUBLICITARIO</p>
+          <ins
+            class="adsbygoogle"
+            style="display:block"
+            data-ad-client="ca-pub-3049130201122598"
+            data-ad-slot="1234567890"
+            data-ad-format="auto"
+            data-full-width-responsive="true"
+          ></ins>
+        </aside>
       </section>
+
+      <section class="category-grid" id="category-grid" aria-live="polite"></section>
+
+      <section class="category-links" id="category-links" aria-label="Titulares rápidos"></section>
+
+      <section class="category-videos" id="category-videos" aria-label="Videos de la categoría"></section>
 
       <section class="ad-shell ad-shell-bottom" aria-label="Espacio publicitario inferior">
-        <p class="ad-label">Publicidad</p>
-        <ins class="adsbygoogle" style="display:block"
+        <p class="ad-label">ESPACIO PUBLICITARIO</p>
+        <ins
+          class="adsbygoogle"
+          style="display:block"
           data-ad-client="ca-pub-3049130201122598"
           data-ad-slot="1234567890"
           data-ad-format="auto"
           data-full-width-responsive="true"
-          data-ad-category="${safeCategory}"
-          data-ad-position="bottom"
         ></ins>
       </section>
     </main>
 
-    <footer class="site-footer">
-      <p>Noticias de ${safeCategory} – Actualización automática cada 30 minutos.</p>
-      <p><a href="index.html" style="color:var(--brand);font-weight:700;">← Volver al inicio</a></p>
+    <footer class="site-footer site-footer--pro">
+      <div class="footer-top">
+        <p class="footer-brand">Noticias Artilleros del Caos</p>
+        <div class="footer-hashtags">#${escapeHtml(categoryName.toUpperCase())} | #TENDENCIAS | #VIDEOS | #ULTIMAHORA</div>
+      </div>
+      <nav class="site-footer-links" aria-label="Enlaces legales">
+        <a href="aviso-legal.html">Aviso legal</a>
+        <a href="privacidad.html">Privacidad</a>
+        <a href="cookies.html">Cookies</a>
+      </nav>
+      <p>© 2026 Noticias Artilleros del Caos. Todos los derechos reservados.</p>
     </footer>
 
-    <script>
-      document.querySelectorAll("ins.adsbygoogle").forEach(function (block) {
-        if (block.dataset.adsLoaded === "true") return;
-        try {
-          (window.adsbygoogle = window.adsbygoogle || []).push({});
-          block.dataset.adsLoaded = "true";
-        } catch (e) {
-          console.debug("AdSense no disponible:", e && e.message ? e.message : e);
-        }
-      });
-    </script>
+    <script src="category.js" defer></script>
   </body>
 </html>`;
 }
@@ -838,30 +848,26 @@ async function actualizarNoticias() {
 
     await writeFileAsync(INDEX_FILE, JSON.stringify(payload, null, 2));
 
-    // ── Score tracking + autoexpansión de landings SEO por categoría ──────────
+    // ── Score tracking + actualización de landings por categoría ──────────────
     const scores = loadCategoryScores();
 
-    // Agrupar artículos por categoría
-    const byCategory = {};
-    for (const item of generatedNews) {
-      if (!byCategory[item.category]) byCategory[item.category] = [];
-      byCategory[item.category].push(item);
-    }
+    const landingAliases = {
+      Finanzas: ["Finanzas", "Economía"]
+    };
 
-    for (const [categoryName, items] of Object.entries(byCategory)) {
+    for (const category of CATEGORIES) {
+      const categoryName = category.name;
+      const catSlug = slugify(categoryName);
+      const aliases = landingAliases[categoryName] || [categoryName];
+      const items = generatedNews.filter((item) => aliases.includes(item.category));
+
       updateCategoryScore(scores, categoryName, items.length);
 
-      const catScore = scores[categoryName].score;
-      const catSlug = slugify(categoryName);
-
-      // Generar (o regenerar) landing cuando el score alcanza el umbral
-      if (catScore >= SCORE_THRESHOLD) {
-        const html = buildCategoryLandingHtml(categoryName, catSlug, items);
-        const landingPath = path.join(LANDINGS_DIR, `${catSlug}.html`);
-        await writeFileAsync(landingPath, html);
-        scores[categoryName].landingGenerated = true;
-        console.log(`  → Landing SEO generada: ${catSlug}.html (score ${catScore})`);
-      }
+      const html = buildCategoryLandingHtml(categoryName, catSlug, items);
+      const landingPath = path.join(LANDINGS_DIR, `${catSlug}.html`);
+      await writeFileAsync(landingPath, html);
+      scores[categoryName].landingGenerated = true;
+      console.log(`  → Landing SEO generada: ${catSlug}.html (${items.length} noticias)`);
     }
 
     await writeFileAsync(SCORES_FILE, JSON.stringify(scores, null, 2));

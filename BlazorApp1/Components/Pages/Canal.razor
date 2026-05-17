@@ -1,0 +1,64 @@
+@page "/canal/{Slug}"
+@inject BlazorApp1.Services.InterestAutomationService InterestService
+
+<PageTitle>@_pageTitle</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="@_metaDescription" />
+    <meta name="keywords" content="@_metaKeywords" />
+    <meta property="og:title" content="@_pageTitle" />
+    <meta property="og:description" content="@_metaDescription" />
+    <meta property="og:type" content="website" />
+</HeadContent>
+
+@if (_category is null)
+{
+    <section class="topic-hero">
+        <span class="topic-tag">Canal no encontrado</span>
+        <h1>Esta categoria no esta disponible ahora</h1>
+        <p>Vuelve a [Categorias](/categorias) para elegir otro tema en tendencia.</p>
+    </section>
+}
+else
+{
+    <TopicPageView TopicKey="@_category.Slug"
+                   Title="@($"{_category.Name}: noticias y videos de alto interes")"
+                   Tagline="Tendencia dinamica"
+                   Description="@_category.Description"
+                   DataProvider="LoadDataAsync" />
+}
+
+@code {
+    [Parameter]
+    public string Slug { get; set; } = string.Empty;
+
+    private BlazorApp1.Models.InterestCategory? _category;
+    private string _pageTitle = "Canal de interes | Noticias y videos";
+    private string _metaDescription = "Noticias por interes con actualizacion automatica y SEO optimizado.";
+    private string _metaKeywords = "noticias, videos virales, categorias, tendencia";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _category = InterestService.GetCategories().FirstOrDefault(item => item.Slug.Equals(Slug, StringComparison.OrdinalIgnoreCase));
+
+        if (_category is null)
+        {
+            await InterestService.EnsureFreshDataAsync();
+            _category = InterestService.GetCategories().FirstOrDefault(item => item.Slug.Equals(Slug, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (_category is null)
+        {
+            return;
+        }
+
+        _pageTitle = $"{_category.Name} | Noticias y videos virales en tiempo real";
+        _metaDescription = _category.Description + " Actualizacion automatica para captar mas trafico organico.";
+        _metaKeywords = $"{_category.Name.ToLowerInvariant()}, noticias {_category.Name.ToLowerInvariant()}, videos {_category.Name.ToLowerInvariant()}, tendencia";
+    }
+
+    private Task<BlazorApp1.Models.TopicPageData> LoadDataAsync(string topicKey, CancellationToken cancellationToken)
+    {
+        return InterestService.GetTopicDataAsync(topicKey, cancellationToken);
+    }
+}

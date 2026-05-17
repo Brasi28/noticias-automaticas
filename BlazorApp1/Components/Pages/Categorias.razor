@@ -1,0 +1,40 @@
+@page "/categorias"
+@inject BlazorApp1.Services.InterestAutomationService InterestService
+
+<PageTitle>Categorias de Mayor Interes | Actualizacion automatica</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="Categorias en tendencia detectadas automaticamente por interes de usuarios, con noticias y videos para cada vertical." />
+    <meta name="keywords" content="categorias en tendencia, noticias por interes, seo automatico, trafico organico" />
+    <meta property="og:title" content="Categorias de mayor interes en tiempo real" />
+    <meta property="og:description" content="Explora las categorias mas vistas y entra a sus paginas independientes." />
+    <meta property="og:type" content="website" />
+</HeadContent>
+
+<section class="topic-hero">
+    <span class="topic-tag">Deteccion automatica</span>
+    <h1>Categorias mas vistas y de mayor interes</h1>
+    <p>Estas categorias se actualizan de forma independiente cada 30 minutos segun tendencia y demanda.</p>
+</section>
+
+<section class="home-categories">
+    @foreach (var category in _categories)
+    {
+        <article class="category-card">
+            <h2>@category.Name</h2>
+            <p>@category.Description</p>
+            <p><b>Interes estimado:</b> @category.Score</p>
+            <a href="/canal/@category.Slug">Entrar al canal</a>
+        </article>
+    }
+</section>
+
+@code {
+    private IReadOnlyList<BlazorApp1.Models.InterestCategory> _categories = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InterestService.EnsureFreshDataAsync();
+        _categories = InterestService.GetCategories();
+    }
+}
