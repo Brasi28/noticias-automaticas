@@ -427,6 +427,48 @@ function renderLegalLinks(basePath = "") {
     </nav>`;
 }
 
+function renderCookieBanner(basePath = "") {
+  return `
+    <div class="cookie-banner" id="cookie-banner" hidden>
+      <div>
+        <p class="cookie-title">Usamos cookies</p>
+        <p class="cookie-text">Usamos cookies técnicas y de publicidad para mejorar la experiencia, medir el tráfico y mostrar anuncios relevantes. Puedes aceptarlas, rechazarlas o revisar la política de cookies.</p>
+      </div>
+      <div class="cookie-actions">
+        <a class="cookie-link" href="${basePath}cookies.html">Ver política</a>
+        <button type="button" class="cookie-btn cookie-btn--ghost" data-cookie-action="reject">Rechazar</button>
+        <button type="button" class="cookie-btn" data-cookie-action="accept">Aceptar</button>
+      </div>
+    </div>`;
+}
+
+function cookieBannerScript() {
+  return `
+      (function () {
+        var KEY = "cookieConsent_v1";
+        var banner = document.getElementById("cookie-banner");
+        if (!banner) return;
+
+        function applyConsent(value) {
+          try { localStorage.setItem(KEY, value); } catch (e) {}
+          banner.hidden = true;
+        }
+
+        try {
+          var current = localStorage.getItem(KEY);
+          if (!current) banner.hidden = false;
+        } catch (e) {
+          banner.hidden = false;
+        }
+
+        banner.addEventListener("click", function (event) {
+          var action = event.target && event.target.getAttribute ? event.target.getAttribute("data-cookie-action") : null;
+          if (!action) return;
+          applyConsent(action === "accept" ? "accepted" : "rejected");
+        });
+      })();`;
+}
+
 function buildNewsHtml(newsItem) {
   const articleImagePath = /^https?:\/\//i.test(newsItem.thumbnail)
     ? newsItem.thumbnail
@@ -508,6 +550,15 @@ function buildNewsHtml(newsItem) {
       .legal-nav a { color: #0b7285; text-decoration: none; font-weight: 700; font-size: .85rem; }
       .legal-nav a:hover { text-decoration: underline; }
       .ad-micro-grid { display: grid; gap: .9rem; margin: .9rem 0; }
+      .cookie-banner { position: sticky; bottom: 1rem; margin-top: 1rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; border: 1px solid #d8ceb8; border-radius: 18px; background: rgba(255,253,248,.96); padding: 0.95rem 1rem; box-shadow: 0 18px 40px rgba(23,34,59,.16); }
+      .cookie-banner[hidden] { display: none; }
+      .cookie-title { margin: 0; font-weight: 700; color: #17223b; }
+      .cookie-text { margin: .2rem 0 0; color: #4c5c73; font-size: .92rem; line-height: 1.6; max-width: 72ch; }
+      .cookie-actions { display: flex; gap: .55rem; flex-wrap: wrap; align-items: center; }
+      .cookie-link { color: #0b7285; font-weight: 700; text-decoration: none; }
+      .cookie-link:hover { text-decoration: underline; }
+      .cookie-btn { border: 0; background: #0b7285; color: #fff; padding: .55rem .9rem; border-radius: 999px; font-weight: 700; cursor: pointer; }
+      .cookie-btn--ghost { background: #e7eef1; color: #17223b; }
       footer { margin-top: 1rem; color: #4c5c73; font-size: .9rem; }
     </style>
     <script type="application/ld+json">
@@ -579,6 +630,7 @@ ${JSON.stringify(jsonLd, null, 2)}
           <p>Fuente: ${safeSourceName}</p>
         </footer>
       </article>
+      ${renderCookieBanner("../")}
     </main>
     <script>
       document.querySelectorAll("ins.adsbygoogle").forEach((block) => {
@@ -590,6 +642,7 @@ ${JSON.stringify(jsonLd, null, 2)}
           console.debug("AdSense no disponible:", error && error.message ? error.message : error);
         }
       });
+${cookieBannerScript()}
     </script>
   </body>
 </html>`;
@@ -630,6 +683,15 @@ function buildLegalPageHtml({ title, description, heading, sections }) {
       .legal-panel { margin-top: 1rem; border: 1px solid #d8ceb8; border-radius: 18px; background: #fffdf8; padding: 1rem; box-shadow: 0 14px 40px rgba(23,34,59,.12); }
       .legal-panel h2 { margin: 0 0 .55rem; font-size: 1.05rem; }
       .legal-panel p { margin: .45rem 0; line-height: 1.75; color: #27344c; }
+      .cookie-banner { position: sticky; bottom: 1rem; margin-top: 1rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap; border: 1px solid #d8ceb8; border-radius: 18px; background: rgba(255,253,248,.96); padding: 0.95rem 1rem; box-shadow: 0 18px 40px rgba(23,34,59,.16); }
+      .cookie-banner[hidden] { display: none; }
+      .cookie-title { margin: 0; font-weight: 700; color: #17223b; }
+      .cookie-text { margin: .2rem 0 0; color: #4c5c73; font-size: .92rem; line-height: 1.6; max-width: 72ch; }
+      .cookie-actions { display: flex; gap: .55rem; flex-wrap: wrap; align-items: center; }
+      .cookie-link { color: #0b7285; font-weight: 700; text-decoration: none; }
+      .cookie-link:hover { text-decoration: underline; }
+      .cookie-btn { border: 0; background: #0b7285; color: #fff; padding: .55rem .9rem; border-radius: 999px; font-weight: 700; cursor: pointer; }
+      .cookie-btn--ghost { background: #e7eef1; color: #17223b; }
       footer { margin-top: 1rem; color: #4c5c73; font-size: .92rem; }
       footer a { color: #0b7285; font-weight: 700; text-decoration: none; }
       footer a:hover { text-decoration: underline; }
@@ -658,6 +720,7 @@ ${sectionHtml}
         ${renderLegalLinks("")}
         <p><a href="index.html">← Volver al inicio</a></p>
       </footer>
+      ${renderCookieBanner("")}
     </main>
     <script>
       document.querySelectorAll("ins.adsbygoogle").forEach(function (block) {
@@ -669,6 +732,7 @@ ${sectionHtml}
           console.debug("AdSense no disponible:", e && e.message ? e.message : e);
         }
       });
+${cookieBannerScript()}
     </script>
   </body>
 </html>`;

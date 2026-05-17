@@ -56,6 +56,32 @@ const AdCtr = {
   }
 };
 
+function initCookieBanner() {
+  const banner = document.getElementById("cookie-banner");
+  if (!banner) return;
+
+  const KEY = "cookieConsent_v1";
+
+  try {
+    if (!localStorage.getItem(KEY)) {
+      banner.hidden = false;
+    }
+  } catch (error) {
+    banner.hidden = false;
+  }
+
+  banner.addEventListener("click", (event) => {
+    const action = event.target?.getAttribute?.("data-cookie-action");
+    if (!action) return;
+
+    try {
+      localStorage.setItem(KEY, action === "accept" ? "accepted" : "rejected");
+    } catch (error) {}
+
+    banner.hidden = true;
+  });
+}
+
 // Crea un bloque de anuncio inteligente con seguimiento de impresiones y clics.
 function createSmartAdBlock(category, position) {
   const wrapper = document.createElement("section");
@@ -331,4 +357,6 @@ initAds();
 setInterval(() => {
   loadNews();
 }, REFRESH_INTERVAL_MS);
+
+initCookieBanner();
 
