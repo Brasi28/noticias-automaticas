@@ -418,6 +418,15 @@ function escapeHtml(text = "") {
     .replace(/'/g, "&#39;");
 }
 
+function renderLegalLinks(basePath = "") {
+  return `
+    <nav class="legal-nav" aria-label="Enlaces legales">
+      <a href="${basePath}aviso-legal.html">Aviso legal</a>
+      <a href="${basePath}privacidad.html">Privacidad</a>
+      <a href="${basePath}cookies.html">Cookies</a>
+    </nav>`;
+}
+
 function buildNewsHtml(newsItem) {
   const articleImagePath = /^https?:\/\//i.test(newsItem.thumbnail)
     ? newsItem.thumbnail
@@ -495,6 +504,9 @@ function buildNewsHtml(newsItem) {
       .actions { margin-top: 1.2rem; display: flex; gap: .8rem; flex-wrap: wrap; }
       .btn { text-decoration: none; background: #17223b; color: #fff; padding: .6rem 1rem; border-radius: 999px; font-weight: 700; }
       .btn.alt { background: #0b7285; }
+      .legal-nav { margin-top: .9rem; display: flex; flex-wrap: wrap; gap: .55rem; }
+      .legal-nav a { color: #0b7285; text-decoration: none; font-weight: 700; font-size: .85rem; }
+      .legal-nav a:hover { text-decoration: underline; }
       footer { margin-top: 1rem; color: #4c5c73; font-size: .9rem; }
     </style>
     <script type="application/ld+json">
@@ -551,6 +563,7 @@ ${JSON.stringify(jsonLd, null, 2)}
             <a class="btn" href="../index.html">Volver al inicio</a>
             <a class="btn alt" href="${safeSourceUrl}" target="_blank" rel="noopener noreferrer">Ver fuente original</a>
           </div>
+          ${renderLegalLinks("../")}
           <p>Fuente: ${safeSourceName}</p>
         </footer>
       </article>
@@ -566,6 +579,67 @@ ${JSON.stringify(jsonLd, null, 2)}
         }
       });
     </script>
+  </body>
+</html>`;
+}
+
+function buildLegalPageHtml({ title, description, heading, sections }) {
+  const sectionHtml = sections
+    .map(
+      (section) => `
+        <section class="legal-panel">
+          <h2>${escapeHtml(section.title)}</h2>
+          ${section.paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("\n")}
+        </section>`
+    )
+    .join("\n");
+
+  return `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escapeHtml(title)}</title>
+    <meta name="description" content="${escapeHtml(description)}" />
+    <meta name="robots" content="index, follow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+    <style>
+      body { margin: 0; font-family: "Space Grotesk", "Segoe UI", sans-serif; color: #17223b; min-height: 100vh; background: radial-gradient(circle at 12% 12%, #ffe4b8 0%, rgba(255, 228, 184, 0) 45%), radial-gradient(circle at 90% 25%, #cbe6f0 0%, rgba(203, 230, 240, 0) 50%), linear-gradient(160deg, #f4efe6 0%, #efe6d6 100%); padding: 1.3rem; }
+      .wrapper { max-width: 920px; margin: 0 auto; }
+      .hero { border: 1px solid #d8ceb8; border-radius: 18px; background: rgba(255,253,248,.9); padding: 1.2rem; box-shadow: 0 14px 40px rgba(23,34,59,.14); }
+      .eyebrow { margin: 0; color: #0b7285; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; font-size: .78rem; }
+      h1 { margin: .35rem 0; font-family: "Fraunces", Georgia, serif; font-size: clamp(1.8rem, 4vw, 2.8rem); line-height: 1.1; }
+      .lead { margin: 0; color: #4c5c73; max-width: 72ch; }
+      .legal-nav { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1rem; }
+      .legal-nav a { color: #0b7285; text-decoration: none; font-weight: 700; }
+      .legal-nav a:hover { text-decoration: underline; }
+      .legal-panel { margin-top: 1rem; border: 1px solid #d8ceb8; border-radius: 18px; background: #fffdf8; padding: 1rem; box-shadow: 0 14px 40px rgba(23,34,59,.12); }
+      .legal-panel h2 { margin: 0 0 .55rem; font-size: 1.05rem; }
+      .legal-panel p { margin: .45rem 0; line-height: 1.75; color: #27344c; }
+      footer { margin-top: 1rem; color: #4c5c73; font-size: .92rem; }
+      footer a { color: #0b7285; font-weight: 700; text-decoration: none; }
+      footer a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <main class="wrapper">
+      <section class="hero">
+        <p class="eyebrow">Información legal</p>
+        <h1>${escapeHtml(heading)}</h1>
+        <p class="lead">${escapeHtml(description)}</p>
+        ${renderLegalLinks("")}
+      </section>
+
+${sectionHtml}
+
+      <footer>
+        <p>Noticias Automáticas. Sitio informativo con actualización automática cada 30 minutos.</p>
+        ${renderLegalLinks("")}
+        <p><a href="index.html">← Volver al inicio</a></p>
+      </footer>
+    </main>
   </body>
 </html>`;
 }
@@ -697,6 +771,102 @@ async function actualizarNoticias() {
     }
 
     await writeFileAsync(SCORES_FILE, JSON.stringify(scores, null, 2));
+
+    const legalPages = [
+      {
+        fileName: "aviso-legal.html",
+        title: "Aviso legal | Noticias Automáticas",
+        description: "Aviso legal del sitio Noticias Automáticas.",
+        heading: "Aviso legal",
+        sections: [
+          {
+            title: "Titularidad del sitio",
+            paragraphs: [
+              "Este sitio web es una publicación informativa automática sobre noticias, organizada por categorías y actualizada de forma periódica.",
+              "Las noticias, imágenes y enlaces externos provienen de fuentes públicas y servicios de terceros utilizados para agregación y monetización."
+            ]
+          },
+          {
+            title: "Condiciones de uso",
+            paragraphs: [
+              "El acceso al sitio implica la aceptación de este aviso legal y del resto de políticas publicadas.",
+              "El contenido se ofrece con carácter informativo. Aunque se intenta mantener la mayor precisión posible, no se garantiza la ausencia total de errores, cambios de origen o interrupciones del servicio."
+            ]
+          },
+          {
+            title: "Responsabilidad y propiedad intelectual",
+            paragraphs: [
+              "Cada fuente citada conserva sus derechos sobre los contenidos originales. Las referencias, títulos y miniaturas se emplean con fines informativos y de enlace hacia la noticia original.",
+              "Si detectas un problema de atribución, enlace o uso de contenido, puedes solicitar su revisión a través del sitio de contacto del proyecto."
+            ]
+          }
+        ]
+      },
+      {
+        fileName: "privacidad.html",
+        title: "Política de privacidad | Noticias Automáticas",
+        description: "Política de privacidad del sitio Noticias Automáticas.",
+        heading: "Política de privacidad",
+        sections: [
+          {
+            title: "Datos que puede tratar el sitio",
+            paragraphs: [
+              "Este sitio puede registrar métricas técnicas básicas de navegación, como visitas, clics y rendimiento, para mejorar la experiencia y la distribución de contenido.",
+              "Si se usan formularios de contacto en el futuro, los datos aportados voluntariamente solo se emplearán para responder a la solicitud correspondiente."
+            ]
+          },
+          {
+            title: "Servicios de terceros",
+            paragraphs: [
+              "El sitio integra servicios externos como Google AdSense, contenido embebido de YouTube y fuentes de noticias de terceros.",
+              "Estos proveedores pueden procesar información técnica del navegador conforme a sus propias políticas de privacidad."
+            ]
+          },
+          {
+            title: "Derechos y contacto",
+            paragraphs: [
+              "Si quieres solicitar aclaraciones sobre esta política o revisar información que te afecte, puedes hacerlo a través de los canales de contacto del proyecto.",
+              "Revisamos esta política cuando cambia la forma en que el sitio procesa o publica información."
+            ]
+          }
+        ]
+      },
+      {
+        fileName: "cookies.html",
+        title: "Política de cookies | Noticias Automáticas",
+        description: "Política de cookies del sitio Noticias Automáticas.",
+        heading: "Política de cookies",
+        sections: [
+          {
+            title: "Cookies utilizadas",
+            paragraphs: [
+              "El sitio puede usar cookies técnicas para mantener funciones básicas, recordar preferencias de navegación y mejorar el rendimiento.",
+              "También pueden emplearse cookies de publicidad y medición asociadas a Google AdSense y otros servicios de terceros integrados en las páginas."
+            ]
+          },
+          {
+            title: "Gestión de cookies",
+            paragraphs: [
+              "Puedes limitar o bloquear cookies desde la configuración de tu navegador. Si lo haces, algunas funciones o anuncios pueden dejar de mostrarse correctamente.",
+              "Cuando se añadan mecanismos de consentimiento específicos, estas preferencias se respetarán según lo configurado por el usuario."
+            ]
+          },
+          {
+            title: "Actualizaciones",
+            paragraphs: [
+              "Esta política puede cambiar si se incorporan nuevos proveedores o tecnologías de seguimiento.",
+              "Se recomienda revisarla periódicamente para conocer la versión vigente."
+            ]
+          }
+        ]
+      }
+    ];
+
+    for (const page of legalPages) {
+      const html = buildLegalPageHtml(page);
+      await writeFileAsync(path.join(ROOT_DIR, page.fileName), html);
+    }
+
     console.log(`Actualización finalizada. Noticias generadas: ${generatedNews.length}`);
   } catch (error) {
     console.error("Error general en la actualización:", error);

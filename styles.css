@@ -283,6 +283,23 @@ h1 {
   margin: 0.2rem 0;
 }
 
+.site-footer-links {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.site-footer-links a {
+  color: var(--brand);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.site-footer-links a:hover {
+  text-decoration: underline;
+}
+
 .status-card {
   border: 1px dashed var(--border);
   border-radius: var(--radius);
