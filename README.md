@@ -106,3 +106,8 @@ Tambien esta preparado este camino:
 ### Nota importante
 
 - Usa un solo proveedor principal para produccion (GitHub Pages o Netlify) para evitar confusiones de URLs publicas.
+
+## Verificacion de despliegue
+
+- Las landings SEO nuevas se generan en la raiz del sitio como `deportes.html`, `salud.html`, `finanzas.html`, `cripto.html`, `tecnologia.html`, `inteligencia-artificial.html`, `videojuegos.html` y `entretenimiento.html`.
+- Si alguna devuelve 404 despues de un despliegue, fuerza un rebuild desde el proveedor para invalidar la publicacion anterior.
