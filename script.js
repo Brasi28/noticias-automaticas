@@ -575,7 +575,7 @@ function renderEditorialGrid(newsList) {
 
     container.appendChild(sectionCard);
 
-    if ((index + 1) % 4 === 0) {
+    if ((index + 1) % 3 === 0) {
       const adBlock = document.createElement("section");
       adBlock.className = "ad-shell ad-inline ad-inline--wide";
       adBlock.innerHTML = `
