@@ -1108,3 +1108,24 @@ img { display: block; max-width: 100%; }
   .news-grid { grid-template-columns: 1fr; }
   .clan-logo-text { font-size: 1.3rem; letter-spacing: 1px; }
 }
+
+/* ─── MARCO DECORATIVO PARA TODOS LOS GRIDS ─────────────────────────────── */
+.news-grid,
+.videos-footer-grid,
+.category-grid,
+.ad-micro-grid {
+  position: relative;
+  z-index: 0;
+}
+
+.news-grid::before,
+.videos-footer-grid::before,
+.category-grid::before,
+.ad-micro-grid::before {
+  content: '';
+  position: absolute;
+  inset: -22px -26px;
+  background: url('imagen web/MARCO-GRID.png') no-repeat center / 100% 100%;
+  pointer-events: none;
+  z-index: -1;
+}
