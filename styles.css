@@ -615,7 +615,7 @@ img { display: block; max-width: 100%; }
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background: url('assets/frames/frame1.png') center/cover no-repeat;
+  background: url('assets/marco-grid.png') center/cover no-repeat;
   opacity: 0.85;
 }
 
@@ -741,7 +741,7 @@ img { display: block; max-width: 100%; }
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background: url('assets/frames/frame1.png') center/cover no-repeat;
+  background: url('assets/marco-grid.png') center/cover no-repeat;
   opacity: 0.85;
 }
 
