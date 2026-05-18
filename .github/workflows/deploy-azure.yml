@@ -15,9 +15,9 @@ name: Deploy Noticias → Azure Static Web Apps
 
 on:
   push:
-    branches: ["main", "master"]
+    branches: ["main", "master", "principal"]
   schedule:
-    - cron: "10 */1 * * *"   # cada hora, 10 minutos después del de GitHub Pages
+    - cron: "10 */1 * * *"
   workflow_dispatch:
 
 permissions:
