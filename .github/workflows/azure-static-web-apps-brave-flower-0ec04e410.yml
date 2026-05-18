@@ -39,17 +39,5 @@ jobs:
         action: "upload"
         app_location: "BlazorApp1"
         api_location: ""
-        output_location: "wwwroot"
+        output_location: "wwwroot" # Apunta directamente a la carpeta generada por el publish previo
         skip_app_build: true
-
-  close_pull_request_job:
-    if: github.event_name == 'pull_request' && github.event_name.action == 'closed'
-    runs-on: ubuntu-latest
-    name: Close Pull Request Job
-    steps:
-    - name: Close Pull Request
-      id: closepullrequest
-      uses: Azure/static-web-apps-deploy@v1
-      with:
-        azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BRAVE_FLOWER_0EC04E10 }}
-        action: "close"
