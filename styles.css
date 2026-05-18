@@ -2173,10 +2173,11 @@ button:hover,
 
 .hero-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.7fr) minmax(200px, 0.3fr);
   gap: 1rem;
   margin-top: 1rem;
   width: 100%;
+}
 
 .hero-story--news {
   grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
@@ -2203,9 +2204,82 @@ button:hover,
   font-family: "Montserrat", sans-serif;
 }
 
+/* ─── Hero: 2 tarjetas de categoría bajo la imagen principal ─── */
+.hero-cat-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.hero-cat-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #3a3a3a;
+  background: #0d0d0d;
+}
+
+.hero-cat-card__link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.hero-cat-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.hero-cat-card:hover img {
+  transform: scale(1.04);
+}
+
+.hero-cat-card__overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+}
+
+.hero-cat-card__kicker {
+  display: inline-block;
+  background: #d00000;
+  color: #fff;
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-bottom: 0.3rem;
+}
+
+.hero-cat-card__overlay h3 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
+  line-height: 1.3;
+}
+
+@media (max-width: 600px) {
+  .hero-cat-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .hero-ad {
-  min-height: 100%;
+  min-height: 280px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
