@@ -28,7 +28,7 @@ jobs:
           action: "upload"
           ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-         app_location: "BlazorApp1" # Carpeta de origen
+          app_location: "BlazorApp1" # Carpeta de origen
           api_location: "" 
           output_location: "wwwroot" # Aquí es donde buscaremos los archivos publicados
           skip_app_build: true # 👈 ESTA LÍNEA ES CLAVE: Le dice a Azure que no compile con Oryx
