@@ -23,6 +23,7 @@ const SCORES_FILE = path.join(NEWS_DIR, "category-scores.json");
 const LANDINGS_DIR = ROOT_DIR;
 const REFRESH_INTERVAL_MS = 1_800_000;
 const MAX_ITEMS_PER_CATEGORY = 3;
+const FETCH_ITEMS_PER_CATEGORY = 12;
 // Número de ejecuciones con artículos para que se genere la landing SEO de una categoría.
 const SCORE_THRESHOLD = 1;
 
@@ -244,6 +245,7 @@ ${JSON.stringify(jsonLd, null, 2)}
       <p>© 2026 Noticias Artilleros del Caos. Todos los derechos reservados.</p>
     </footer>
 
+    <script src="assets/js/analytics-tracker.js" defer></script>
     <script src="category.js" defer></script>
   </body>
 </html>`;
@@ -300,6 +302,45 @@ function slugify(input = "") {
     .slice(0, 80);
 }
 
+function buildTitleSignature(title = "") {
+  const stopwords = new Set([
+    "de", "la", "el", "los", "las", "y", "en", "para", "con", "por", "del", "al",
+    "un", "una", "que", "se", "su", "sus", "es", "son", "como", "mas", "más",
+    "hoy", "ultimas", "últimas", "ultima", "última", "mexico", "méxico"
+  ]);
+
+  const tokens = String(title)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length > 2 && !stopwords.has(t));
+
+  return Array.from(new Set(tokens));
+}
+
+function areLikelyDuplicateTitles(a = "", b = "") {
+  const sigA = buildTitleSignature(a);
+  const sigB = buildTitleSignature(b);
+  if (!sigA.length || !sigB.length) return false;
+
+  const setA = new Set(sigA);
+  const setB = new Set(sigB);
+  let intersection = 0;
+
+  for (const token of setA) {
+    if (setB.has(token)) intersection += 1;
+  }
+
+  const union = setA.size + setB.size - intersection;
+  const jaccard = union > 0 ? intersection / union : 0;
+
+  // Criterio reforzado: evita repetir el mismo evento en distintas fuentes.
+  return jaccard >= 0.5 || (intersection >= 4 && Math.min(setA.size, setB.size) <= intersection + 2);
+}
+
 function formatDateForFile(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -312,31 +353,356 @@ function createThumbnail(category, slug) {
   return `https://picsum.photos/seed/${seed}/1200/675`;
 }
 
-async function resolveThumbnailUrl(category, slug) {
-  const unsplashKey = process.env.UNSPLASH_ACCESS_KEY;
+function escapeSvgText(text = "") {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
-  if (!unsplashKey) {
-    return createThumbnail(category, slug);
-  }
+// Normaliza caracteres especiales para SVG en UTF-8 sin entidades rotas
+function normSvg(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
+// Genera una portada editorial local cuando no existe imagen real utilizable.
+function createAICoverDataUrl(rawNews, slug) {
+  const title    = stripHtml(rawNews.title    || "Noticia de ultima hora");
+  const category = stripHtml(rawNews.category || "Actualidad");
+  const source   = stripHtml(rawNews.source   || "Fuente verificada");
+  const safeTitle    = normSvg(title.length > 72 ? title.slice(0, 69) + "..." : title);
+  const safeCategory = normSvg(category.toUpperCase());
+  const safeSource   = normSvg(source);
+
+  // Paleta editorial por categoría
+  const paleta = {
+    "Tecnología":             { a: "#0ea5e9", b: "#6366f1", glow: "#0ea5e920" },
+    "Inteligencia Artificial":{ a: "#8b5cf6", b: "#ec4899", glow: "#8b5cf620" },
+    "Deportes":               { a: "#22c55e", b: "#16a34a", glow: "#22c55e20" },
+    "Finanzas":               { a: "#f59e0b", b: "#f97316", glow: "#f59e0b20" },
+    "Videojuegos":            { a: "#a855f7", b: "#ec4899", glow: "#a855f720" },
+    "Entretenimiento":        { a: "#f43f5e", b: "#fb923c", glow: "#f43f5e20" },
+    "Salud":                  { a: "#10b981", b: "#0891b2", glow: "#10b98120" },
+    "Cripto":                 { a: "#f59e0b", b: "#eab308", glow: "#f59e0b20" },
+  };
+  const col  = paleta[category] || { a: "#ef4444", b: "#f59e0b", glow: "#ef444420" };
+
+  // Dividir título en 2 líneas si es largo
+  const words   = safeTitle.split(" ");
+  const mid     = Math.ceil(words.length / 2);
+  const line1   = words.slice(0, mid).join(" ");
+  const line2   = words.slice(mid).join(" ");
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-label="Portada IA ${safeCategory}">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#0a0f1e"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${col.a}"/>
+      <stop offset="100%" stop-color="${col.b}"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="18" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Fondo -->
+  <rect width="1200" height="675" fill="url(#bg)"/>
+
+  <!-- Círculos de ambiente -->
+  <circle cx="980" cy="100" r="280" fill="${col.a}" opacity="0.07"/>
+  <circle cx="180" cy="580" r="220" fill="${col.b}" opacity="0.06"/>
+
+  <!-- Tarjeta principal -->
+  <rect x="52" y="44" width="1096" height="587" rx="20" fill="#080d1a" stroke="${col.a}" stroke-opacity="0.25" stroke-width="1.5"/>
+
+  <!-- Barra de color superior -->
+  <rect x="52" y="44" width="1096" height="8" rx="4" fill="url(#acc)"/>
+
+  <!-- Línea decorativa izquierda -->
+  <rect x="52" y="80" width="5" height="520" fill="url(#acc)" opacity="0.6"/>
+
+  <!-- Etiqueta de categoría -->
+  <rect x="90" y="86" width="${safeCategory.length * 14 + 32}" height="38" rx="6" fill="url(#acc)"/>
+  <text x="106" y="111" fill="#ffffff" font-family="Montserrat,Arial,sans-serif" font-size="18" font-weight="800" letter-spacing="2">${safeCategory}</text>
+
+  <!-- Punto de breaking news -->
+  <circle cx="90" cy="164" r="7" fill="${col.a}" filter="url(#glow)"/>
+  <text x="108" y="170" fill="${col.a}" font-family="Montserrat,Arial,sans-serif" font-size="15" font-weight="700" letter-spacing="1">ÚLTIMA HORA</text>
+
+  <!-- Título — línea 1 -->
+  <text x="90" y="240" fill="#f1f5f9" font-family="Montserrat,Arial,sans-serif" font-size="46" font-weight="800" filter="url(#glow)">${line1}</text>
+  <!-- Título — línea 2 -->
+  <text x="90" y="300" fill="#f1f5f9" font-family="Montserrat,Arial,sans-serif" font-size="46" font-weight="800">${line2}</text>
+
+  <!-- Separador -->
+  <rect x="90" y="328" width="120" height="3" rx="2" fill="url(#acc)"/>
+
+  <!-- Descripción IA -->
+  <text x="90" y="510" fill="#64748b" font-family="Roboto,Arial,sans-serif" font-size="16">Portada generada por IA editorial · ${safeSource}</text>
+
+  <!-- Pie: logo textual -->
+  <text x="90" y="590" fill="${col.a}" font-family="Montserrat,Arial,sans-serif" font-size="22" font-weight="700" opacity="0.5">NOTICIAS ARTILLEROS DEL CAOS</text>
+  <text x="1082" y="590" fill="#334155" font-family="Roboto,Arial,sans-serif" font-size="14" text-anchor="end">artillerosdelcaos.es</text>
+</svg>`;
+
+  // Devolver como data URI con SVG puro (saveThumbnailLocally lo decodifica y guarda en UTF-8)
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function createContextualThumbnail(rawNews, slug) {
+  const titleKeywords = stripHtml(rawNews.title || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9áéíóúñü\s]/gi, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 3)
+    .slice(0, 6)
+    .join("-");
+
+  const seedBase = titleKeywords || slug || stripHtml(rawNews.category || "noticia");
+  const seed = encodeURIComponent(`contexto-${seedBase}`);
+  return `https://picsum.photos/seed/${seed}/1600/900`;
+}
+
+function createArticleCaptureThumbnail(articleUrl = "") {
+  if (!articleUrl) return "";
+  return `https://image.thum.io/get/width/1200/crop/675/noanimate/${encodeURIComponent(articleUrl)}`;
+}
+
+function extractImageFromHtmlSnippet(html = "") {
+  const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (!imgMatch || !imgMatch[1]) return "";
+  return decodeHtmlEntities(imgMatch[1]);
+}
+
+function extractMetaImageFromPageHtml(pageHtml = "", key = "") {
+  if (!key) return "";
+  const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const direct = pageHtml.match(
+    new RegExp(`<meta[^>]+(?:property|name)=["']${escapedKey}["'][^>]+content=["']([^"']+)["'][^>]*>`, "i")
+  );
+  if (direct && direct[1]) return decodeHtmlEntities(direct[1]);
+
+  const inverse = pageHtml.match(
+    new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${escapedKey}["'][^>]*>`, "i")
+  );
+  return inverse && inverse[1] ? decodeHtmlEntities(inverse[1]) : "";
+}
+
+function normalizeCandidateUrl(candidate = "", baseUrl = "") {
+  if (!candidate) return "";
   try {
-    const query = encodeURIComponent(category);
-    const endpoint = `https://api.unsplash.com/photos/random?query=${query}&orientation=landscape&client_id=${unsplashKey}`;
-    const response = await fetch(endpoint);
-
-    if (!response.ok) {
-      throw new Error(`Unsplash no disponible (${response.status})`);
-    }
-
-    const payload = await response.json();
-    return payload?.urls?.regular || createThumbnail(category, slug);
-  } catch (error) {
-    console.error(`Fallback a Picsum para miniatura de ${category}:`, error.message);
-    return createThumbnail(category, slug);
+    return new URL(candidate, baseUrl).toString();
+  } catch {
+    return "";
   }
 }
 
+function isLikelyImageUrl(url = "") {
+  return /\.(jpe?g|png|webp|gif|avif)(\?|$)/i.test(url) || /\/image/i.test(url);
+}
+
+function isGenericNewsLogo(url = "") {
+  const normalized = String(url).toLowerCase();
+  const blockedTokens = [
+    "gstatic.com",
+    "google-news",
+    "news_512dp",
+    "googleusercontent.com",
+    "lh3.googleusercontent.com",
+    "/favicon",
+    "/logo",
+    "/icons/",
+    "news icon",
+    "logo"
+  ];
+
+  return (
+    blockedTokens.some((token) => normalized.includes(token)) ||
+    /(^|\W)icon(\W|$)/i.test(normalized)
+  );
+}
+
+function isStrictRealNewsImage(imageUrl = "", articleUrl = "") {
+  if (!imageUrl) return false;
+
+  let imageParsed;
+  try {
+    imageParsed = new URL(imageUrl);
+  } catch {
+    return false;
+  }
+
+  const host = imageParsed.hostname.toLowerCase();
+  const pathName = imageParsed.pathname.toLowerCase();
+
+  // Bloqueo estricto de fuentes genéricas/placeholder/logo/stock.
+  const blockedHosts = [
+    "picsum.photos",
+    "image.thum.io",
+    "gstatic.com",
+    "googleusercontent.com",
+    "unsplash.com",
+    "pexels.com",
+    "pixabay.com",
+    "placeholder.com"
+  ];
+
+  if (blockedHosts.some((blocked) => host.includes(blocked))) return false;
+  if (isGenericNewsLogo(imageUrl)) return false;
+  if (/favicon|sprite|icon|avatar|logo/.test(pathName)) return false;
+
+  // Regla de coherencia: prioriza dominios del mismo medio (host exacto o subdominio).
+  if (articleUrl) {
+    try {
+      const articleHost = new URL(articleUrl).hostname.toLowerCase();
+      const sameDomain = host === articleHost || host.endsWith(`.${articleHost}`) || articleHost.endsWith(`.${host}`);
+      if (sameDomain) return true;
+    } catch {
+      // si falla parseo del artículo, continuamos con validación básica.
+    }
+  }
+
+  // Aún si no es mismo dominio, permitir CDNs periodísticos que no sean genéricos.
+  return /\.(jpe?g|png|webp|avif)(\?|$)/i.test(imageUrl) && !/cdn\.instagram|fbcdn|ytimg/.test(host);
+}
+
+function extractOriginalUrlFromGoogleNewsLink(googleNewsUrl = "") {
+  if (!googleNewsUrl) return "";
+
+  let parsed;
+  try {
+    parsed = new URL(googleNewsUrl);
+  } catch {
+    return "";
+  }
+
+  if (!parsed.hostname.includes("news.google.com")) {
+    return googleNewsUrl;
+  }
+
+  const tokenMatch = parsed.pathname.match(/\/articles\/([^/?#]+)/i);
+  if (!tokenMatch || !tokenMatch[1]) return "";
+
+  const token = tokenMatch[1].replace(/-/g, "+").replace(/_/g, "/");
+  const padded = token.padEnd(Math.ceil(token.length / 4) * 4, "=");
+
+  let decodedUtf8 = "";
+  let decodedLatin1 = "";
+  try {
+    const bytes = Buffer.from(padded, "base64");
+    decodedUtf8 = bytes.toString("utf8");
+    decodedLatin1 = bytes.toString("latin1");
+  } catch {
+    return "";
+  }
+
+  const extractUrls = (text) => {
+    const matches = text.match(/https?:\/\/[^\s\x00-\x1F"'<>]+/g) || [];
+    return matches.filter((u) => {
+      try {
+        const candidate = new URL(u);
+        return !candidate.hostname.includes("news.google.com") && !candidate.hostname.includes("google.com");
+      } catch {
+        return false;
+      }
+    });
+  };
+
+  const urls = [...extractUrls(decodedUtf8), ...extractUrls(decodedLatin1)];
+  return urls[0] || "";
+}
+
+async function extractPrimaryImageFromSource(articleUrl) {
+  if (!articleUrl) return "";
+
+  try {
+    const response = await fetch(articleUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (NewsBot/1.0)",
+        Accept: "text/html,application/xhtml+xml"
+      },
+      signal: AbortSignal.timeout(12000)
+    });
+
+    if (!response.ok) {
+      return "";
+    }
+
+    const pageHtml = await response.text();
+
+    const candidates = [
+      extractMetaImageFromPageHtml(pageHtml, "og:image:secure_url"),
+      extractMetaImageFromPageHtml(pageHtml, "og:image"),
+      extractMetaImageFromPageHtml(pageHtml, "twitter:image"),
+      extractMetaImageFromPageHtml(pageHtml, "twitter:image:src")
+    ]
+      .map((url) => normalizeCandidateUrl(url, articleUrl))
+      .filter(Boolean);
+
+    for (const candidate of candidates) {
+      if (isLikelyImageUrl(candidate)) return candidate;
+    }
+
+    return candidates[0] || "";
+  } catch {
+    return "";
+  }
+}
+
+async function resolveThumbnailUrl(rawNews, slug) {
+  const originalLink = extractOriginalUrlFromGoogleNewsLink(rawNews.link);
+  const rssImage = normalizeCandidateUrl(rawNews.rssImage || "", rawNews.link || "");
+  const sourceImage = await extractPrimaryImageFromSource(originalLink || rawNews.link);
+  const articleUrl = originalLink || rawNews.link || "";
+
+  // Regla estricta: solo imagen real del medio; si no, portada IA.
+  const candidates = [rssImage, sourceImage].filter(Boolean);
+  const relevant = candidates.find((url) => isStrictRealNewsImage(url, articleUrl));
+  if (relevant) {
+    rawNews.hasRealImage  = true;
+    rawNews.originalLink  = originalLink || rawNews.link;
+    return relevant;
+  }
+
+  if (candidates.length > 0) {
+    console.log(`⚠️ Imagen no cumple política estricta para: ${rawNews.title?.slice(0, 60) || slug}`);
+  }
+
+  rawNews.hasRealImage = false;
+  rawNews.originalLink = originalLink || rawNews.link;
+  console.log(`⚠️ Sin imagen real para ${rawNews.title?.slice(0, 60) || slug}, generando portada IA.`);
+  return createAICoverDataUrl(rawNews, slug);
+}
+
 async function saveThumbnailLocally(imageUrl, slug) {
+  // Portada IA en SVG (data: URL) → decodificar y guardar como .svg en disco
+  if (imageUrl && imageUrl.startsWith("data:image/svg+xml")) {
+    try {
+      const marker  = "charset=utf-8,";
+      const idx     = imageUrl.indexOf(marker);
+      const encoded = idx !== -1 ? imageUrl.slice(idx + marker.length) : imageUrl.slice(imageUrl.indexOf(",") + 1);
+      const svgText = decodeURIComponent(encoded);
+      const fileName = `thumb-${slug}.svg`;
+      const absolutePath = path.join(ASSETS_DIR, fileName);
+      await writeFileAsync(absolutePath, svgText, "utf8");
+      return `assets/${fileName}`;
+    } catch (err) {
+      console.error(`No se pudo guardar portada IA SVG (${slug}):`, err.message);
+      return imageUrl;
+    }
+  }
+
   try {
     const response = await fetch(imageUrl);
     if (!response.ok) {
@@ -344,7 +710,9 @@ async function saveThumbnailLocally(imageUrl, slug) {
     }
 
     const bytes = await response.arrayBuffer();
-    const fileName = `thumb-${slug}.jpg`;
+    const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+    const extension = contentType.includes("image/svg+xml") ? "svg" : "jpg";
+    const fileName = `thumb-${slug}.${extension}`;
     const absolutePath = path.join(ASSETS_DIR, fileName);
 
     await writeFileAsync(absolutePath, Buffer.from(bytes));
@@ -367,6 +735,7 @@ function parseRssItems(rssXml = "") {
   return blocks.map((block) => {
     const title = extractTag(block, "title");
     const description = extractTag(block, "description");
+    const rawDescription = extractTag(block, "description");
     const link = extractTag(block, "link");
     const pubDate = extractTag(block, "pubDate");
 
@@ -376,6 +745,7 @@ function parseRssItems(rssXml = "") {
     return {
       title: stripHtml(title),
       description: stripHtml(description),
+      rssImage: extractImageFromHtmlSnippet(rawDescription),
       link,
       pubDate,
       source
@@ -462,14 +832,22 @@ async function buildNewsCopy(raw) {
 
   try {
     const aiResult = await freeAiGenerator.generateProfessionalNews({
-      topic: raw.title,
-      category: raw.category,
-      keywords: extractKeywords(raw.title, raw.description),
-      details: raw.description
+      topic:        raw.title,
+      category:     raw.category,
+      keywords:     extractKeywords(raw.title, raw.description),
+      details:      raw.description,
+      sourceName:   raw.source   || "Google News",
+      sourceUrl:    raw.originalLink || raw.link || "",
+      hasRealImage: raw.hasRealImage || false
     });
+
+    const duplicateRejected = Array.isArray(aiResult?.motivos)
+      ? aiResult.motivos.some((m) => /noticia duplicada|duplicado/i.test(String(m)))
+      : false;
 
     return {
       seoTitle: aiResult.titulo_final || createSeoTitle(raw.title, raw.category),
+      duplicateRejected,
       fullSummary: aiResult.cuerpo || buildSummary({
         title: raw.title,
         description: raw.description,
@@ -488,6 +866,7 @@ async function buildNewsCopy(raw) {
 
     return {
       seoTitle: createSeoTitle(raw.title, raw.category),
+      duplicateRejected: false,
       fullSummary
     };
   }
@@ -716,6 +1095,7 @@ ${JSON.stringify(jsonLd, null, 2)}
       </article>
       ${renderCookieBanner("../")}
     </main>
+    <script src="../assets/js/analytics-tracker.js" defer></script>
     <script>
       document.querySelectorAll("ins.adsbygoogle").forEach((block) => {
         if (block.dataset.adsLoaded === "true") return;
@@ -806,6 +1186,7 @@ ${sectionHtml}
       </footer>
       ${renderCookieBanner("")}
     </main>
+    <script src="assets/js/analytics-tracker.js" defer></script>
     <script>
       document.querySelectorAll("ins.adsbygoogle").forEach(function (block) {
         if (block.dataset.adsLoaded === "true") return;
@@ -842,8 +1223,9 @@ async function fetchCategoryNews(category) {
   const xml = await response.text();
   const parsed = parseRssItems(xml);
 
-  return parsed.slice(0, MAX_ITEMS_PER_CATEGORY).map((item) => ({
+  return parsed.slice(0, FETCH_ITEMS_PER_CATEGORY).map((item) => ({
     ...item,
+    originalLink: extractOriginalUrlFromGoogleNewsLink(item.link),
     category: category.name
   }));
 }
@@ -864,25 +1246,43 @@ async function actualizarNoticias() {
       }
     }
 
-    const dedupeMap = new Map();
-    for (const item of allFetched) {
-      const key = `${slugify(item.title)}::${item.link}`;
-      if (!dedupeMap.has(key)) {
-        dedupeMap.set(key, item);
-      }
-    }
+    const uniqueNews = [];
+    const seenByUrl = new Set();
 
-    const uniqueNews = Array.from(dedupeMap.values());
+    for (const item of allFetched) {
+      const stableUrl = item.originalLink || item.link || "";
+      if (stableUrl && seenByUrl.has(stableUrl)) continue;
+
+      const isSemanticDuplicate = uniqueNews.some((existing) =>
+        areLikelyDuplicateTitles(existing.title, item.title)
+      );
+      if (isSemanticDuplicate) continue;
+
+      if (stableUrl) seenByUrl.add(stableUrl);
+      uniqueNews.push(item);
+    }
     const generatedAt = new Date();
     const dateForFile = formatDateForFile(generatedAt);
 
     const generatedNews = [];
+    const categoryCount = new Map();
 
     for (const raw of uniqueNews) {
+      const currentCount = categoryCount.get(raw.category) || 0;
+      if (currentCount >= MAX_ITEMS_PER_CATEGORY) {
+        continue;
+      }
+
       const slug = slugify(raw.title || `${raw.category}-noticia`);
       const redactedNews = await buildNewsCopy(raw);
+
+      if (redactedNews.duplicateRejected) {
+        console.log(`⏭️ Duplicada descartada por Jefe Editorial: ${raw.title?.slice(0, 80) || slug}`);
+        continue;
+      }
+
       const seoTitle = redactedNews.seoTitle;
-      const remoteThumbnailUrl = await resolveThumbnailUrl(raw.category, slug);
+      const remoteThumbnailUrl = await resolveThumbnailUrl(raw, slug);
       const thumbnail = await saveThumbnailLocally(remoteThumbnailUrl, slug);
       const fullSummary = redactedNews.fullSummary;
       const metaDescription = createMetaDescription(fullSummary);
@@ -898,7 +1298,7 @@ async function actualizarNoticias() {
         metaDescription,
         thumbnail,
         generatedAt: generatedAt.toISOString(),
-        sourceUrl: raw.link,
+        sourceUrl: raw.originalLink || raw.link,
         sourceName: raw.source || "Google News",
         fileName
       };
@@ -909,6 +1309,7 @@ async function actualizarNoticias() {
       // Requisito solicitado: creación automática con fs.writeFile.
       await writeFileAsync(targetPath, html);
       generatedNews.push(item);
+      categoryCount.set(raw.category, currentCount + 1);
     }
 
     const payload = {
@@ -1046,13 +1447,19 @@ async function actualizarNoticias() {
 
 const runOnce = process.argv.includes("--once");
 
-// Primera ejecución inmediata.
-loadDotEnv();
-actualizarNoticias();
+async function main() {
+  loadDotEnv();
+  await actualizarNoticias();
 
-// Si no se pide modo --once, mantiene la actualización automática cada 30 minutos.
-if (!runOnce) {
-  setInterval(() => {
-    actualizarNoticias();
-  }, REFRESH_INTERVAL_MS);
+  // Si no se pide modo --once, mantiene la actualización automática cada 30 minutos.
+  if (!runOnce) {
+    setInterval(() => {
+      actualizarNoticias();
+    }, REFRESH_INTERVAL_MS);
+  }
 }
+
+main().catch((error) => {
+  console.error("Fallo en inicialización del generador:", error);
+  process.exitCode = 1;
+});

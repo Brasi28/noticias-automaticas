@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -34,8 +34,18 @@ jobs:
 
       - name: Generate news (single run)
         env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          ESTIMATED_RPM_USD: ${{ secrets.ESTIMATED_RPM_USD || '1.5' }}
         run: npm run generate:once
+
+      - name: Persist budget & analytics
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add editorial-logs/budget.json news/analytics-summary.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "chore: update budget & analytics [skip ci]"
+          git push || true
 
       - name: Build static artifact
         run: |
