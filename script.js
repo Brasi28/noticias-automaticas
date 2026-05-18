@@ -41,6 +41,43 @@ const VIDEO_CATEGORIES = [
   "Cripto"
 ];
 
+const TRACK_ENDPOINT = "/.netlify/functions/track-event";
+
+function sendMetric(payload) {
+  try {
+    fetch(TRACK_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify(payload)
+    }).catch(() => {});
+  } catch (error) {}
+}
+
+function trackPageView() {
+  sendMetric({
+    type: "page_view",
+    path: location.pathname,
+    referrer: document.referrer || ""
+  });
+}
+
+function trackOutboundClicks() {
+  document.addEventListener("click", (event) => {
+    const anchor = event.target && event.target.closest ? event.target.closest("a[href]") : null;
+    if (!anchor) return;
+    const href = anchor.getAttribute("href") || "";
+    if (!/^https?:\/\//i.test(href)) return;
+    if (href.includes(location.host)) return;
+
+    sendMetric({
+      type: "outbound_click",
+      path: location.pathname,
+      referrer: href
+    });
+  });
+}
+
 // ─── Smart Ad CTR Tracker ────────────────────────────────────────────────────
 const AdCtr = {
   KEY: "adCtrData_v1",
@@ -162,6 +199,43 @@ function initAds() {
       console.debug("AdSense no inicializado todavía:", error?.message || error);
     }
   }
+
+  if ("IntersectionObserver" in window) {
+    const seen = new WeakSet();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          if (seen.has(entry.target)) return;
+          seen.add(entry.target);
+
+          sendMetric({
+            type: "ad_impression",
+            path: location.pathname,
+            slot: entry.target.getAttribute("data-ad-slot") || "",
+            position: entry.target.getAttribute("data-ad-position") || ""
+          });
+        });
+      },
+      { threshold: 0.35 }
+    );
+
+    adBlocks.forEach((block) => {
+      observer.observe(block);
+      const parent = block.closest(".ad-shell") || block.parentElement;
+      if (parent && !parent.dataset.metricClickBound) {
+        parent.dataset.metricClickBound = "true";
+        parent.addEventListener("click", () => {
+          sendMetric({
+            type: "ad_click",
+            path: location.pathname,
+            slot: block.getAttribute("data-ad-slot") || "",
+            position: block.getAttribute("data-ad-position") || ""
+          });
+        }, { once: true });
+      }
+    });
+  }
 }
 
 // Limita una cadena por palabras para no cortar de forma brusca en medio.
@@ -171,14 +245,68 @@ function truncateByWords(text, maxWords = 30) {
   return `${words.slice(0, maxWords).join(" ")}...`;
 }
 
+function escapeSvgText(text = "") {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function isGenericThumb(url = "") {
+  const normalized = String(url).toLowerCase();
+  return (
+    !normalized ||
+    normalized.includes("picsum.photos") ||
+    normalized.includes("image.thum.io") ||
+    normalized.includes("google-news") ||
+    normalized.includes("/logo")
+  );
+}
+
+function createAICoverSvgDataUrl(item = {}) {
+  const title = escapeSvgText(truncateByWords(item.seoTitle || "Noticia de ultima hora", 14));
+  const category = escapeSvgText((item.category || "Actualidad").toUpperCase());
+  const source = escapeSvgText(item.sourceName || "Fuente verificada");
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <rect x="64" y="64" width="1072" height="547" rx="24" fill="#0b1220" opacity="0.9" stroke="#334155"/>
+  <rect x="64" y="64" width="1072" height="10" fill="url(#accent)"/>
+  <text x="110" y="150" fill="#f8fafc" font-family="Montserrat, Arial" font-size="42" font-weight="700">${category}</text>
+  <text x="110" y="235" fill="#e2e8f0" font-family="Roboto, Arial" font-size="36">${title}</text>
+  <text x="110" y="575" fill="#94a3b8" font-family="Roboto, Arial" font-size="22">Fuente: ${source}</text>
+  <text x="110" y="605" fill="#64748b" font-family="Roboto, Arial" font-size="18">Portada IA editorial</text>
+</svg>`;
+
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function resolveDisplayThumbnail(item) {
+  if (!item) return createAICoverSvgDataUrl();
+  return isGenericThumb(item.thumbnail) ? createAICoverSvgDataUrl(item) : item.thumbnail;
+}
+
 // Renderiza una tarjeta de estado (cargando, vacío o error).
 function renderStatus(message) {
   container.innerHTML = `<article class="status-card"><p>${message}</p></article>`;
 }
 
-function getYouTubeSearchEmbedUrl(category) {
-  const query = encodeURIComponent(`noticias ${category} hoy`);
-  return `https://www.youtube.com/embed?listType=search&list=${query}&rel=0&modestbranding=1`;
+function getYouTubeSearchUrl(title, category) {
+  const q = encodeURIComponent(`${title || category} noticias`);
+  return `https://www.youtube.com/results?search_query=${q}`;
 }
 
 function initVideoCarousel() {
@@ -234,23 +362,16 @@ function renderVideos(newsList = []) {
   selectedVideos.forEach((item) => {
     const card = document.createElement("article");
     card.className = "video-card video-card--featured";
-    const embedUrl = getYouTubeSearchEmbedUrl(item.category || "Noticias");
+    const ytUrl = getYouTubeSearchUrl(item.seoTitle, item.category || "Noticias");
+    const thumb = item.thumbnail || `assets/thumb-placeholder.svg`;
     card.innerHTML = `
-      <div class="video-thumb video-embed">
-        <iframe
-          src="${embedUrl}"
-          title="Video recomendado sobre ${item.category}"
-          loading="lazy"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
-        ></iframe>
-      </div>
+      <a class="video-thumb" href="${ytUrl}" target="_blank" rel="noopener noreferrer" aria-label="Ver vídeo sobre ${item.category}">
+        <img src="${thumb}" alt="${item.category}" loading="lazy" style="width:100%;aspect-ratio:16/9;object-fit:cover;display:block;" onerror="this.style.background='#111';this.style.minHeight='80px';" />
+        <span class="video-play">▶</span>
+      </a>
       <div class="video-copy">
-        <p class="video-kicker">Video destacado</p>
+        <p class="video-kicker">${item.category}</p>
         <h3>${item.seoTitle}</h3>
-        <p>${truncateByWords(item.shortSummary, 18)}</p>
-        <a class="video-link" href="news/${item.fileName}">LEER CONTEXTO</a>
       </div>`;
     videoContainer.appendChild(card);
   });
@@ -285,7 +406,7 @@ function createNewsCard(item, extraClass = "") {
     card.classList.add(extraClass);
   }
 
-  image.src = item.thumbnail;
+  image.src = resolveDisplayThumbnail(item);
   image.alt = `Miniatura: ${item.seoTitle}`;
   category.textContent = item.category;
   title.textContent = item.seoTitle;
@@ -316,7 +437,7 @@ function initHeroViralControls(videos, currentIndex = 0) {
     const item = videos[safeIndex];
     const clip = VIRAL_CLIPS[safeIndex % VIRAL_CLIPS.length];
     player.src = clip.url;
-    player.poster = item.thumbnail || "";
+    player.poster = resolveDisplayThumbnail(item);
     player.play().catch(() => {});
     categoryEl.textContent = item.category || "VIRAL";
     titleEl.textContent = `${item.seoTitle} · ${clip.title}`;
@@ -346,13 +467,40 @@ function renderFeaturedStory(newsList = []) {
   const featured = document.getElementById("featured-story");
   if (!featured || !newsList.length) return;
 
-  const heroItem = [...newsList].sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))[0];
+  const sorted = [...newsList].sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt));
+  const heroItem = sorted[0];
   if (!heroItem) return;
+
+  // Seleccionar 2 categorías distintas para los destacados bajo el hero
+  const usedCategories = new Set([heroItem.category]);
+  const cat2Items = [];
+  for (const item of sorted.slice(1)) {
+    if (!usedCategories.has(item.category)) {
+      usedCategories.add(item.category);
+      cat2Items.push(item);
+    }
+    if (cat2Items.length >= 2) break;
+  }
+  // Si no hay 2 categorías distintas, usar las siguientes noticias
+  while (cat2Items.length < 2 && sorted.length > cat2Items.length + 1) {
+    cat2Items.push(sorted[cat2Items.length + 1]);
+  }
+
+  const catCardsHTML = cat2Items.map(item => `
+    <article class="hero-cat-card">
+      <a href="news/${item.fileName}" class="hero-cat-card__link">
+        <img src="${resolveDisplayThumbnail(item)}" alt="${item.seoTitle}" loading="lazy" decoding="async" />
+        <div class="hero-cat-card__overlay">
+          <span class="hero-cat-card__kicker">${item.category}</span>
+          <h3>${truncateByWords(item.seoTitle, 10)}</h3>
+        </div>
+      </a>
+    </article>`).join("");
 
   featured.innerHTML = `
     <article class="hero-story hero-story--news">
       <div class="hero-story__media">
-        <img src="${heroItem.thumbnail}" alt="Imagen destacada de ${heroItem.seoTitle}" loading="eager" decoding="async" />
+        <img src="${resolveDisplayThumbnail(heroItem)}" alt="Imagen destacada de ${heroItem.seoTitle}" loading="eager" decoding="async" />
         <div class="hero-story__badge">ÚLTIMA HORA</div>
       </div>
       <div class="hero-story__content">
@@ -364,7 +512,8 @@ function renderFeaturedStory(newsList = []) {
           <span class="hero-story__meta">${new Date(heroItem.generatedAt).toLocaleString("es-ES")}</span>
         </div>
       </div>
-    </article>`;
+    </article>
+    ${cat2Items.length ? `<div class="hero-cat-row">${catCardsHTML}</div>` : ""}`;
 }
 
 function renderTrendingNow(newsList) {
@@ -380,7 +529,7 @@ function renderTrendingNow(newsList) {
     <div class="trend-list">
       ${topItems.map((item) => `
         <a class="trend-item" href="news/${item.fileName}">
-          <img src="${item.thumbnail}" alt="Miniatura de ${item.seoTitle}" loading="lazy" />
+          <img src="${resolveDisplayThumbnail(item)}" alt="Miniatura de ${item.seoTitle}" loading="lazy" />
           <div>
             <p>${item.category}</p>
             <h3>${truncateByWords(item.seoTitle, 10)}</h3>
@@ -416,7 +565,7 @@ function renderEditorialGrid(newsList) {
         <span>${item.category}</span>
       </div>
       <a class="section-card__image" href="news/${item.fileName}">
-        <img src="${item.thumbnail}" alt="Miniatura de ${item.seoTitle}" loading="lazy" />
+        <img src="${resolveDisplayThumbnail(item)}" alt="Miniatura de ${item.seoTitle}" loading="lazy" />
       </a>
       <div class="section-card__body">
         <h3><a href="news/${item.fileName}">${item.seoTitle}</a></h3>
@@ -594,6 +743,8 @@ if (refreshBtn) {
 }
 
 // Carga inicial + recarga automática cada 30 minutos.
+trackPageView();
+trackOutboundClicks();
 loadNews();
 initAds();
 setInterval(() => {

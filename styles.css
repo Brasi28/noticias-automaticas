@@ -871,8 +871,8 @@ img { display: block; max-width: 100%; }
 
 .video-thumbnails {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
@@ -889,6 +889,7 @@ img { display: block; max-width: 100%; }
   overflow: hidden;
   scroll-snap-align: start;
   position: relative;
+  font-size: 0.75rem;
 }
 
 .video-card--featured::before {
@@ -932,7 +933,7 @@ img { display: block; max-width: 100%; }
   border: 1px solid #ff4433;
 }
 
-.video-copy { padding: 10px; }
+.video-copy { padding: 6px 8px; }
 
 .video-kicker {
   font-size: 0.68rem;
@@ -945,19 +946,24 @@ img { display: block; max-width: 100%; }
 
 .video-copy h3 {
   font-family: 'Montserrat', sans-serif;
-  font-size: 0.82rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: #fff;
-  margin: 0 0 5px;
+  margin: 0 0 4px;
   text-transform: uppercase;
-  line-height: 1.3;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .video-copy p {
-  font-size: 0.76rem;
+  font-size: 0.68rem;
   color: #999;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.3;
+  display: none;
 }
 
 .video-link {
